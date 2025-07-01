@@ -1,22 +1,6 @@
-
 fastapi
-uvicorn[standard]
-
-# Agno Framework
-agno
-
-# Databases & Cache
-psycopg2-binary
-qdrant-client
-redis
-SQLAlchemy
-
-# LLM & Embeddings
+uvicorn
 google-generativeai
-sentence-transformers
-
-# Utilities
 python-dotenv
-pydantic
-langchain
-langchain-community
+streamlit
+requests

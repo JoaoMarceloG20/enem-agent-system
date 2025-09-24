@@ -171,22 +171,71 @@ class AgentRunResponse(BaseResponse):
 
 # Quiz Specific Models
 class QuizQuestion(BaseModel):
-    """Quiz question model"""
-    question_id: str
-    question_text: str
-    context: Optional[str] = None
-    alternatives: Dict[str, str]  # {"A": "option1", "B": "option2", ...}
-    correct_answer: str
-    explanation: str
-    topic: str
-    difficulty: DifficultyEnum
-    subject: SubjectEnum
+    """Quiz question model with complete ENEM structure"""
+    question_id: str = Field(..., description="Unique identifier for the question")
+    context: str = Field(..., description="Contextual text or situation for the question")
+    command: str = Field(..., description="The specific question being asked")
+    alternatives: Dict[str, str] = Field(..., description="5 alternatives A-E")
+    correct_answer: str = Field(..., pattern="^[A-E]$", description="Correct answer letter")
+    explanation: str = Field(..., description="Detailed explanation of the correct answer")
+    topic: str = Field(..., description="Main topic covered by the question")
+    difficulty: DifficultyEnum = Field(..., description="Question difficulty level")
+    subject: SubjectEnum = Field(..., description="Academic subject")
+
+    # Legacy field for backward compatibility
+    question_text: Optional[str] = Field(None, description="Deprecated: use command instead")
+
+    def model_post_init(self, __context):
+        """Ensure backward compatibility"""
+        if self.question_text and not self.command:
+            self.command = self.question_text
+        elif not self.question_text and self.command:
+            self.question_text = self.command
 
 
 class QuizResponse(AgentRunResponse):
-    """Response for quiz generation"""
-    questions: Optional[List[QuizQuestion]] = None
+    """Response for quiz generation with auto-generated content"""
+    questions: List[QuizQuestion] = Field(..., description="Structured quiz questions")
     quiz_metadata: Optional[Dict[str, Any]] = None
+
+    def model_post_init(self, __context):
+        """Auto-generate content from structured questions"""
+        if self.questions and not self.content:
+            self.content = self._generate_content_from_questions()
+
+    def _generate_content_from_questions(self) -> str:
+        """Generate markdown content from structured questions"""
+        if not self.questions:
+            return ""
+
+        content_parts = []
+
+        for i, question in enumerate(self.questions, 1):
+            content_parts.append(f"## Questão {i}")
+            content_parts.append("")
+
+            if question.context:
+                content_parts.append(f"**Contexto:** {question.context}")
+                content_parts.append("")
+
+            content_parts.append(f"**Comando:** {question.command}")
+            content_parts.append("")
+
+            # Add alternatives
+            for letter, alternative in sorted(question.alternatives.items()):
+                content_parts.append(f"{letter}) {alternative}")
+            content_parts.append("")
+
+            # Add answer and explanation
+            content_parts.append(f"**Gabarito:** {question.correct_answer}")
+            content_parts.append(f"**Explicação:** {question.explanation}")
+            content_parts.append(f"**Tópico:** {question.topic}")
+            content_parts.append(f"**Dificuldade:** {question.difficulty}")
+            content_parts.append("")
+            content_parts.append("---")
+            content_parts.append("")
+
+        return "\n".join(content_parts)
 
 
 # Essay Grading Models
@@ -348,55 +397,55 @@ __all__ = [
     "ErrorResponse",
     "ValidationErrorResponse",
     "ValidationErrorDetail",
-    
+
     # Enums
     "StatusEnum",
-    "AgentTypeEnum", 
+    "AgentTypeEnum",
     "SubjectEnum",
     "DifficultyEnum",
     "IntensityEnum",
-    
+
     # Health
     "HealthCheckResponse",
-    
+
     # Agent Info
     "AgentInfo",
-    "AgentListResponse", 
+    "AgentListResponse",
     "AgentInfoResponse",
-    
+
     # Agent Creation
     "AgentCreationRequest",
     "AgentCreationResponse",
-    
+
     # Agent Run
     "AgentRunRequest",
     "AgentRunResponse",
     "AgentRunMetadata",
-    
+
     # Specific Responses
     "QuizResponse",
     "QuizQuestion",
     "EssayGradeResponse",
-    "EssayCompetency", 
+    "EssayCompetency",
     "StudyPlanResponse",
     "StudySession",
     "WeeklyPlan",
     "TutorResponse",
-    
+
     # Utility
     "SubjectListResponse",
     "TopicListResponse",
     "DifficultyListResponse",
     "IntensityListResponse",
-    
+
     # Streaming
     "StreamResponse",
     "StreamChunk",
-    
+
     # Sessions
     "AgentSessionInfo",
     "AgentSessionListResponse",
-    
+
     # Analytics
     "PerformanceMetrics",
     "AnalyticsResponse",

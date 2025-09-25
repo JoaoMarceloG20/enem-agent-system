@@ -198,8 +198,8 @@ async def generate_quiz(request: QuizGenerationRequest):
         except QuizParsingError as e:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Erro ao processar questões geradas: {str(e)}",
-                request_content=request.dict()
+                detail=f"Erro ao processar questões geradas: {str(e)} | {request.dict()}",
+                
             )
         quiz_id = str(uuid.uuid4())
 

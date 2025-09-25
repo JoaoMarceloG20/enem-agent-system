@@ -162,6 +162,7 @@ async def generate_quiz(request: QuizGenerationRequest):
 
     Creates questions tailored to subject, difficulty, and specific topics.
     """
+    
     try:
         # Create quiz agent
         agent = get_agent(
@@ -197,7 +198,8 @@ async def generate_quiz(request: QuizGenerationRequest):
         except QuizParsingError as e:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Erro ao processar questões geradas: {str(e)}"
+                detail=f"Erro ao processar questões geradas: {str(e)}",
+                request_content=request.dict()
             )
         quiz_id = str(uuid.uuid4())
 

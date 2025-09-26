@@ -521,6 +521,7 @@ Requisitos por questão:
 LEMBRE-SE: Se solicitadas {request.num_questions} questões, deve gerar {request.num_questions} blocos completos de questão, cada um com suas próprias 5 alternativas."""
 
 def _parse_generated_questions(content: str, request: QuizGenerationRequest) -> List[QuizQuestion]:
+    print('questions_content', content)
     """Parse generated questions from content"""
     # Simplified parsing for demo
     questions = []

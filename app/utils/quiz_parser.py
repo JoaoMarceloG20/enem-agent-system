@@ -27,7 +27,7 @@ class QuizContentParser:
     """
 
     # Regex patterns for parsing different question components
-    QUESTION_SEPARATOR = re.compile(r"(?:^|\n)\s*#{1,4}\s*Questão\s*(\d+)", re.MULTILINE | re.IGNORECASE)
+    QUESTION_SEPARATOR = re.compile(r"(?:^|\n|---\s*\n?)\s*#{1,4}\s*Questão\s*(\d+)", re.MULTILINE | re.IGNORECASE)
     CONTEXT_PATTERN = re.compile(r"\*\*Contexto:?\*\*\s*(.*?)(?=\*\*|\n[A-E]\)|\n\n|$)", re.DOTALL | re.IGNORECASE)
     COMMAND_PATTERN = re.compile(r"\*\*(?:Comando|Pergunta):?\*\*\s*(.*?)(?=\*\*|\n[A-E]\)|\n\n|$)", re.DOTALL | re.IGNORECASE)
     QUESTION_PATTERN = re.compile(r"\*\*Questão:?\*\*\s*(.*?)(?=\*\*|\n[A-E]\)|\n\n|$)", re.DOTALL | re.IGNORECASE)
@@ -106,17 +106,22 @@ class QuizContentParser:
 
     def _split_into_questions(self, content: str) -> List[str]:
         """Split content into individual question blocks"""
+        # Debug: print first 200 chars to see format
+        print(f"DEBUG PARSER: Content start: {content[:200]}...")
+
         # Find question separators
         separators = list(self.QUESTION_SEPARATOR.finditer(content))
+        print(f"DEBUG PARSER: Found {len(separators)} separators with main pattern")
 
         if not separators:
-            # Try alternative patterns
-            # Look for numbered lists or question patterns
-            alt_pattern = re.compile(r"(?:^|\n)\s*(\d+)[\.\)]\s*", re.MULTILINE)
+            # Try alternative patterns - look for ## Questão without spaces
+            alt_pattern = re.compile(r"(?:^|\n|---\s*\n?)#{1,4}Questão\s*(\d+)", re.MULTILINE | re.IGNORECASE)
             separators = list(alt_pattern.finditer(content))
+            print(f"DEBUG PARSER: Found {len(separators)} separators with alternative pattern (no spaces)")
 
             if not separators:
                 # If no clear separators, treat as single question
+                print("DEBUG PARSER: No separators found, treating as single question")
                 return [content]
 
         question_blocks = []
@@ -126,7 +131,9 @@ class QuizContentParser:
             block = content[start:end].strip()
             if block:
                 question_blocks.append(block)
+                print(f"DEBUG PARSER: Block {i+1} start: {block[:100]}...")
 
+        print(f"DEBUG PARSER: Total blocks found: {len(question_blocks)}")
         return question_blocks
 
     def _parse_single_question(self, block: str, question_number: int) -> QuizQuestion:

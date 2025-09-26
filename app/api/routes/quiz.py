@@ -189,6 +189,7 @@ async def generate_quiz(request: QuizGenerationRequest):
 
         # Parse generated questions using robust parser
         try:
+            print(content)
             questions = parse_quiz_content(
                 content=content,
                 expected_questions=request.num_questions,
@@ -196,6 +197,7 @@ async def generate_quiz(request: QuizGenerationRequest):
                 default_difficulty=request.difficulty
             )
         except QuizParsingError as e:
+            raise e
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Erro ao processar questões geradas: {str(e)} | {request.dict()}",
@@ -242,6 +244,7 @@ async def generate_quiz(request: QuizGenerationRequest):
         return response
 
     except Exception as e:
+        raise e
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro na geração do quiz: {str(e)}"

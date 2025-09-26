@@ -97,7 +97,7 @@ async def general_exception_handler(request: Request, exc: Exception):
     
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=response.model_dump()
+        content=response.model_dump(mode='json')
     )
 
 

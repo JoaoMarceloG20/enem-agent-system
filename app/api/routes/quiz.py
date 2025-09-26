@@ -454,17 +454,71 @@ def _get_subject_icon(subject: str) -> str:
     return icons.get(subject, "📖")
 
 def _build_generation_prompt(request: QuizGenerationRequest) -> str:
-    """Build prompt for quiz generation"""
+    """Build prompt for quiz generation with clear examples"""
     subject_part = f" de {request.subject}" if request.subject else ""
     topics_part = f" focando em: {', '.join(request.topics)}" if request.topics else ""
 
-    return f"""Crie {request.num_questions} questões{subject_part} no nível {request.difficulty}{topics_part}.
+    # Create few-shot examples for clarity
+    example_section = """
+EXEMPLO DE FORMATO ESPERADO (PARA 2 QUESTÕES):
 
-Cada questão deve seguir o padrão ENEM com:
-- Contexto/situação-problema
-- 5 alternativas (A, B, C, D, E)
-- Gabarito com justificativa
-- Tópico abordado"""
+QUESTÃO 1:
+**Contexto:** [Situação-problema detalhada]
+
+**Pergunta:** [Enunciado da questão]
+
+**Alternativas:**
+A) [Primeira alternativa]
+B) [Segunda alternativa]
+C) [Terceira alternativa]
+D) [Quarta alternativa]
+E) [Quinta alternativa]
+
+**Gabarito:** C
+**Justificativa:** [Explicação detalhada da resposta correta]
+**Tópico:** [Tópico específico abordado]
+
+QUESTÃO 2:
+**Contexto:** [Situação-problema detalhada]
+
+**Pergunta:** [Enunciado da questão]
+
+**Alternativas:**
+A) [Primeira alternativa]
+B) [Segunda alternativa]
+C) [Terceira alternativa]
+D) [Quarta alternativa]
+E) [Quinta alternativa]
+
+**Gabarito:** A
+**Justificativa:** [Explicação detalhada da resposta correta]
+**Tópico:** [Tópico específico abordado]
+
+---
+
+"""
+
+    return f"""Você deve criar EXATAMENTE {request.num_questions} questões{subject_part} no nível {request.difficulty}{topics_part}.
+
+INSTRUÇÕES IMPORTANTES:
+- Cada questão é INDEPENDENTE e COMPLETA
+- SEMPRE gere {request.num_questions} questões diferentes (não {request.num_questions} alternativas!)
+- Cada questão deve ter EXATAMENTE 5 alternativas (A, B, C, D, E)
+- Siga rigorosamente o formato do exemplo abaixo
+
+{example_section}
+
+AGORA CRIE {request.num_questions} QUESTÕES SEGUINDO EXATAMENTE ESTE FORMATO:
+
+Requisitos por questão:
+- Contexto realista estilo ENEM
+- Enunciado claro e objetivo
+- 5 alternativas bem elaboradas (A, B, C, D, E)
+- Apenas 1 alternativa correta
+- Justificativa pedagógica completa
+- Tópico específico identificado
+
+LEMBRE-SE: Se solicitadas {request.num_questions} questões, deve gerar {request.num_questions} blocos completos de questão, cada um com suas próprias 5 alternativas."""
 
 def _parse_generated_questions(content: str, request: QuizGenerationRequest) -> List[QuizQuestion]:
     """Parse generated questions from content"""

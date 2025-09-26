@@ -27,12 +27,12 @@ class QuizContentParser:
     """
 
     # Regex patterns for parsing different question components
-    QUESTION_SEPARATOR = re.compile(r"(?:^|\n)\s*#{1,3}\s*Questão\s*(\d+)", re.MULTILINE | re.IGNORECASE)
+    QUESTION_SEPARATOR = re.compile(r"(?:^|\n)\s*#{1,4}\s*Questão\s*(\d+)", re.MULTILINE | re.IGNORECASE)
     CONTEXT_PATTERN = re.compile(r"\*\*Contexto:?\*\*\s*(.*?)(?=\*\*|\n[A-E]\)|\n\n|$)", re.DOTALL | re.IGNORECASE)
-    COMMAND_PATTERN = re.compile(r"\*\*Comando:?\*\*\s*(.*?)(?=\*\*|\n[A-E]\)|\n\n|$)", re.DOTALL | re.IGNORECASE)
+    COMMAND_PATTERN = re.compile(r"\*\*(?:Comando|Pergunta):?\*\*\s*(.*?)(?=\*\*|\n[A-E]\)|\n\n|$)", re.DOTALL | re.IGNORECASE)
     QUESTION_PATTERN = re.compile(r"\*\*Questão:?\*\*\s*(.*?)(?=\*\*|\n[A-E]\)|\n\n|$)", re.DOTALL | re.IGNORECASE)
 
-    ALTERNATIVES_PATTERN = re.compile(r"([A-E])\)\s*(.*?)(?=\n[A-E]\)|\n\n|\*\*|$)", re.DOTALL)
+    ALTERNATIVES_PATTERN = re.compile(r"([A-E])\)\s*(.*?)(?=\n[A-E]\)|\n\*\*|\*\*|$)", re.DOTALL)
     GABARITO_PATTERN = re.compile(r"\*\*Gabarito:?\*\*\s*([A-E])", re.IGNORECASE)
     EXPLANATION_PATTERN = re.compile(r"\*\*(?:Explicação|Justificativa):?\*\*\s*(.*?)(?=\*\*|\n\n|$)", re.DOTALL | re.IGNORECASE)
     TOPIC_PATTERN = re.compile(r"\*\*Tópico:?\*\*\s*(.*?)(?=\*\*|\n\n|$)", re.DOTALL | re.IGNORECASE)
@@ -106,17 +106,23 @@ class QuizContentParser:
 
     def _split_into_questions(self, content: str) -> List[str]:
         """Split content into individual question blocks"""
+        # Debug: print content being parsed
+        print(f"DEBUG: Content to parse: {content[:500]}...")
+
         # Find question separators
         separators = list(self.QUESTION_SEPARATOR.finditer(content))
+        print(f"DEBUG: Found {len(separators)} separators with main pattern")
 
         if not separators:
             # Try alternative patterns
             # Look for numbered lists or question patterns
             alt_pattern = re.compile(r"(?:^|\n)\s*(\d+)[\.\)]\s*", re.MULTILINE)
             separators = list(alt_pattern.finditer(content))
+            print(f"DEBUG: Found {len(separators)} separators with alt pattern")
 
             if not separators:
                 # If no clear separators, treat as single question
+                print("DEBUG: No separators found, treating as single question")
                 return [content]
 
         question_blocks = []
@@ -126,7 +132,9 @@ class QuizContentParser:
             block = content[start:end].strip()
             if block:
                 question_blocks.append(block)
+                print(f"DEBUG: Question block {i+1}: {block[:100]}...")
 
+        print(f"DEBUG: Total question blocks found: {len(question_blocks)}")
         return question_blocks
 
     def _parse_single_question(self, block: str, question_number: int) -> QuizQuestion:
@@ -199,17 +207,33 @@ class QuizContentParser:
         if match:
             return match.group(1).strip()
 
+        # Look for **Comando:** pattern specifically
+        comando_pattern = re.compile(r"\*\*Comando:?\*\*\s*(.*?)(?=\*\*|A\)|$)", re.DOTALL | re.IGNORECASE)
+        match = comando_pattern.search(block)
+        if match:
+            return match.group(1).strip()
+
         # Try to find question text before alternatives
         lines = block.split('\n')
         for line in lines:
             line = line.strip()
-            if line and line.endswith('?') and not line.startswith('**'):
+            if line and line.endswith('?') and not line.startswith('**') and not line.startswith('#'):
                 return line
 
         # Fallback: look for imperative sentences
         for line in lines:
             line = line.strip()
             if line and any(word in line.lower() for word in ['qual', 'quais', 'como', 'onde', 'quando', 'por que', 'determine', 'calcule', 'identifique']):
+                return line
+
+        # Look for lines that look like questions (contain interrogative words)
+        for line in lines:
+            line = line.strip()
+            if (line and
+                not line.startswith('**') and
+                not line.startswith('#') and
+                not re.match(r'^[A-E]\)', line) and
+                len(line) > 10):  # Reasonable question length
                 return line
 
         raise QuizParsingError("Could not extract command/question")

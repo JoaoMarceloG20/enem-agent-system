@@ -106,23 +106,17 @@ class QuizContentParser:
 
     def _split_into_questions(self, content: str) -> List[str]:
         """Split content into individual question blocks"""
-        # Debug: print content being parsed
-        print(f"DEBUG: Content to parse: {content[:500]}...")
-
         # Find question separators
         separators = list(self.QUESTION_SEPARATOR.finditer(content))
-        print(f"DEBUG: Found {len(separators)} separators with main pattern")
 
         if not separators:
             # Try alternative patterns
             # Look for numbered lists or question patterns
             alt_pattern = re.compile(r"(?:^|\n)\s*(\d+)[\.\)]\s*", re.MULTILINE)
             separators = list(alt_pattern.finditer(content))
-            print(f"DEBUG: Found {len(separators)} separators with alt pattern")
 
             if not separators:
                 # If no clear separators, treat as single question
-                print("DEBUG: No separators found, treating as single question")
                 return [content]
 
         question_blocks = []
@@ -132,9 +126,7 @@ class QuizContentParser:
             block = content[start:end].strip()
             if block:
                 question_blocks.append(block)
-                print(f"DEBUG: Question block {i+1}: {block[:100]}...")
 
-        print(f"DEBUG: Total question blocks found: {len(question_blocks)}")
         return question_blocks
 
     def _parse_single_question(self, block: str, question_number: int) -> QuizQuestion:

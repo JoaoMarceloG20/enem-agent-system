@@ -95,9 +95,14 @@ class QuizContentParser:
 
     def _clean_content(self, content: str) -> str:
         """Clean and normalize content"""
-        # Remove excessive whitespace
-        content = re.sub(r'\n\s*\n\s*\n', '\n\n', content)
-        content = re.sub(r'^\s+|\s+$', '', content, flags=re.MULTILINE)
+        # Remove excessive whitespace (3+ line breaks -> 2 line breaks)
+        content = re.sub(r'\n\s*\n\s*\n+', '\n\n', content)
+
+        # Remove trailing whitespace from each line, but preserve line breaks
+        content = re.sub(r'[ \t]+$', '', content, flags=re.MULTILINE)
+
+        # Remove leading whitespace from each line (but not the newlines themselves)
+        content = re.sub(r'^[ \t]+', '', content, flags=re.MULTILINE)
 
         # Normalize markdown formatting
         content = re.sub(r'\*{3,}([^*]+)\*{3,}', r'**\1**', content)

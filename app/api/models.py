@@ -80,7 +80,7 @@ class HealthCheckResponse(BaseResponse):
     """Health check response model"""
     status: StatusEnum = StatusEnum.SUCCESS
     message: str = "Edtech Agent API is running"
-    services: Optional[Dict[str, bool]] = None
+    services: Optional[Dict[str, Any]] = None
     version: Optional[str] = None
 
 

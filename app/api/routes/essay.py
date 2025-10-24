@@ -198,7 +198,7 @@ async def grade_essay(request: EssaySubmissionRequest):
         
         # Create essay grader agent
         agent = get_agent(
-            agent_id=AgentType.ESSAY_GRADER,
+            agent_id=AgentType.ESSAY,
             user_id=request.student_id,
             session_id=request.session_id
         )
@@ -265,7 +265,7 @@ async def grade_essay_detailed(request: DetailedGradingRequest):
     try:
         # Create essay grader agent
         agent = get_agent(
-            agent_id=AgentType.ESSAY_GRADER,
+            agent_id=AgentType.ESSAY,
             user_id=request.student_id,
             session_id=request.session_id
         )

@@ -50,7 +50,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=response.model_dump()
+        content=response.model_dump(mode='json')
     )
 
 
@@ -77,7 +77,7 @@ async def pydantic_validation_exception_handler(request: Request, exc: Validatio
     
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=response.model_dump()
+        content=response.model_dump(mode='json')
     )
 
 

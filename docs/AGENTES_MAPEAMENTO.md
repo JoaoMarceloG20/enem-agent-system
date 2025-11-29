@@ -116,14 +116,8 @@ Pergunta do estudante: {message}
 ```
 
 **Tools Específicas**:
-- `get_conversation_history()` - Histórico de conversas
-- `get_subject_statistics()` - Estatísticas por matéria
-- `suggest_study_topics()` - Sugestões de tópicos
-- `explain_concept()` - Explicar conceitos específicos
-- `solve_problem()` - Resolver problemas passo a passo
-- `get_enem_subjects()` - Lista de matérias disponíveis
-- `switch_subject_context()` - Trocar contexto de matéria
-- `get_study_recommendations()` - Recomendações personalizadas
+- `search_educational_content()` - Pesquisar conteúdo educacional e exercícios
+- `get_curriculum_guidelines()` - Obter diretrizes curriculares do ENEM
 
 **Funcionalidades Avançadas**:
 - Gerenciamento de histórico de conversas (máximo 20 mensagens)
@@ -191,11 +185,8 @@ Você é um especialista em criar questões para o ENEM usando o framework Agno.
 ```
 
 **Tools Específicas**:
-- `submit_quiz_answers()` - Submeter respostas do quiz
-- `get_quiz_statistics()` - Estatísticas de performance
-- `get_quiz_history()` - Histórico de quizzes
-- `get_enem_topics()` - Tópicos disponíveis por matéria
-- `generate_custom_quiz()` - Criar quiz personalizado
+- `save_quiz_result()` - Salvar resultado do quiz e feedback
+- `get_user_performance()` - Obter histórico de desempenho do usuário
 
 **Funcionalidades**:
 - Sistema de correção automática
@@ -287,13 +278,14 @@ essay_themes = [
 ```
 
 **Tools Específicas**:
-- `grade_essay()` - Corrigir redação
-- `get_essay_history_tool()` - Histórico de redações
-- `get_essay_statistics_tool()` - Estatísticas de performance
-- `suggest_essay_theme()` - Sugerir tema aleatório
-- `get_writing_tips()` - Dicas de escrita
-- `get_enem_competencies_tool()` - Explicar competências
-- `get_essay_by_id_tool()` - Buscar redação específica
+- `grade_essay_competencies()` - Avaliar redação nas 5 competências
+- `save_essay_feedback()` - Salvar feedback detalhado
+- `get_essay_history()` - Histórico de redações do usuário
+- `get_essay_statistics()` - Estatísticas de evolução
+- `suggest_essay_theme()` - Sugerir temas de redação
+- `get_writing_tips()` - Dicas de escrita por competência
+- `get_enem_competencies()` - Explicação das competências
+- `analyze_text_statistics()` - Análise quantitativa do texto
 
 **Funcionalidades**:
 - Análise completa das 5 competências ENEM
@@ -361,13 +353,13 @@ Crie um plano de estudos personalizado para o ENEM usando o framework Agno com a
 ```
 
 **Tools Específicas**:
-- `get_study_plan()` - Obter plano por ID
-- `list_user_plans()` - Listar planos do usuário
-- `update_plan_progress()` - Atualizar progresso
-- `adapt_study_plan()` - Adaptar plano baseado em performance
-- `get_weekly_schedule()` - Cronograma semanal
-- `create_custom_plan()` - Criar plano personalizado
-- `get_plan_analytics()` - Análises e estatísticas
+- `create_study_plan()` - Criar novo plano de estudos
+- `save_study_plan()` - Persistir plano gerado
+- `get_current_plan()` - Obter plano ativo
+- `generate_calendar_schedule()` - Gerar calendário semanal
+- `update_plan_progress()` - Marcar atividades como concluídas
+- `get_plan_analytics()` - Analisar progresso e aderência
+- `calculate_time_distribution()` - Calcular distribuição de horas
 
 **Funcionalidades**:
 - Cálculo automático de distribuição de horas
@@ -384,21 +376,13 @@ Crie um plano de estudos personalizado para o ENEM usando o framework Agno com a
 
 **Funcionalidade**: Coordenação central de todos os agentes, roteamento de mensagens e gerenciamento de sessões.
 
-**Não usa IA diretamente** - Funciona como roteador e coordenador.
+**Usa IA (Gemini)** - Utiliza um modelo leve para classificar a intenção do usuário e rotear para o agente especialista adequado (Tutor, Quiz, Essay, StudyPlan).
 
-**Comandos Suportados**:
-```python
-commands = {
-    "/help": "Show help message",
-    "/status": "Show system status", 
-    "/agents": "List available agents",
-    "/sessions": "Show active sessions",
-    "/health": "Check system health",
-    "/switch <agent>": "Switch to specific agent",
-    "/session new": "Create new session",
-    "/session end": "End current session"
-}
-```
+**Funcionalidade Principal**:
+- Recebe mensagem do usuário
+- Classifica intenção (Dúvida -> Tutor, Questão -> Quiz, Redação -> Essay, Planejamento -> StudyPlan)
+- Delega a execução para o agente correto
+- Retorna a resposta do agente especialista
 
 **Agentes Gerenciados**:
 - tutor - Chat with AI tutor

@@ -27,6 +27,8 @@ class Settings(BaseSettings):
         extra='ignore',
     )
 
+    # Gemini Model
+    gemini_model: str = "gemini-2.5-flash"
     # API Settings
     API_V1_STR: str = '/api/v1'
     PROJECT_NAME: str = 'Edtech Agent API'

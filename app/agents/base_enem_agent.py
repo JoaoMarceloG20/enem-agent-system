@@ -165,7 +165,7 @@ class BaseENEMAgent(ABC):
     
     def get_agent(
         self,
-        model_id: str = 'gemini-2.5-flash',
+        model_id: str = settings.gemini_model,
         user_id: Optional[str] = None,
         session_id: Optional[str] = None,
         debug_mode: bool = True,
@@ -262,20 +262,24 @@ def get_agent_health_status() -> Dict[str, Any]:
     # This will be populated as agents are implemented
     agent_classes = {}
     
-    # TODO: Import and register agents as they are implemented
-    # from .tutor_agent import TutorAgent
-    # from .quiz_agent import QuizAgent
-    # from .essay_grader_agent import EssayGraderAgent
-    # from .study_plan_agent import StudyPlanAgent
-    # from .orchestrator_agent import OrchestratorAgent
-    
-    # agent_classes = {
-    #     'tutor': TutorAgent(),
-    #     'quiz': QuizAgent(),
-    #     'essay_grader': EssayGraderAgent(),
-    #     'study_plan': StudyPlanAgent(),
-    #     'orchestrator': OrchestratorAgent(),
-    # }
+    # Import and register agents
+    try:
+        from .tutor_agent import TutorAgent
+        from .quiz_agent import QuizAgent
+        from .essay_grader_agent import EssayGraderAgent
+        from .study_plan_agent import StudyPlanAgent
+        from .orchestrator_agent import OrchestratorAgent
+        
+        agent_classes = {
+            'tutor': TutorAgent(),
+            'quiz': QuizAgent(),
+            'essay_grader': EssayGraderAgent(),
+            'study_plan': StudyPlanAgent(),
+            'orchestrator': OrchestratorAgent(),
+        }
+    except ImportError as e:
+        print(f"Error importing agents for health check: {e}")
+        agent_classes = {}
     
     health_status = {
         'system': {

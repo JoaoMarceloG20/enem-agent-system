@@ -8,16 +8,14 @@ Agora com response models estruturados usando Pydantic.
 import time
 import uuid
 from datetime import datetime
-from enum import Enum
 from logging import getLogger
-from typing import AsyncGenerator, List, Optional, Union
+from typing import List, Optional, Union
 
 from agno.agent import Agent
 from fastapi import APIRouter, HTTPException, status
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from app.core.config import settings
 
-from app.agents.selector import AgentType, get_agent, get_available_agents, get_all_agents_info
+from app.agents.selector import get_agent, get_available_agents, get_all_agents_info
 from app.api.models import (
     # Request models
     AgentCreationRequest,
@@ -37,15 +35,10 @@ from app.api.models import (
     TopicListResponse,
     DifficultyListResponse,
     IntensityListResponse,
-    ErrorResponse,
-    StreamResponse,
     
     # Enums
     AgentTypeEnum,
-    StatusEnum,
-    SubjectEnum,
-    DifficultyEnum,
-    IntensityEnum
+    StatusEnum
 )
 
 logger = getLogger(__name__)
@@ -53,17 +46,23 @@ logger = getLogger(__name__)
 router = APIRouter()
 
 
-class Model(str, Enum):
-    gemini_2_5_flash = 'gemini-2.5-flash'
-
-
 @router.get('', response_model=AgentListResponse)
 async def list_agents():
     """
-    Returns a list of all available agent IDs.
+    Lista todos os IDs de agentes disponíveis no sistema.
 
     Returns:
-        AgentListResponse: Structured response with agent list
+        AgentListResponse: Lista de identificadores de agentes.
+    
+    Example:
+        ```json
+        {
+            "status": "success",
+            "message": "Agents retrieved successfully",
+            "agents": ["tutor", "quiz", "essay_grader", "study_plan"],
+            "total_count": 4
+        }
+        ```
     """
     try:
         agents = get_available_agents()
@@ -84,10 +83,12 @@ async def list_agents():
 @router.get('/info', response_model=AgentInfoResponse)
 async def get_agents_info():
     """
-    Returns detailed information about all available agents.
+    Retorna informações detalhadas sobre todos os agentes disponíveis.
+    
+    Inclui capacidades, parâmetros suportados e descrições.
     
     Returns:
-        AgentInfoResponse: Structured response with agent information
+        AgentInfoResponse: Detalhes completos de cada agente.
     """
     try:
         from app.api.models import AgentInfo
@@ -127,10 +128,12 @@ async def get_agents_info():
 @router.get('/subjects', response_model=SubjectListResponse)
 async def get_supported_subjects():
     """
-    Returns list of subjects supported by ENEM agents.
+    Retorna a lista de matérias suportadas pelos agentes ENEM.
+    
+    Útil para popular dropdowns no frontend.
     
     Returns:
-        SubjectListResponse: Structured response with subjects
+        SubjectListResponse: Lista de matérias com chaves e nomes de exibição.
     """
     try:
         from app.agents.tutor_agent import TutorAgent
@@ -158,13 +161,13 @@ async def get_supported_subjects():
 @router.get('/quiz/topics', response_model=TopicListResponse)
 async def get_quiz_topics(subject: Optional[str] = None):
     """
-    Returns topics available for quiz generation by subject.
+    Retorna tópicos disponíveis para geração de quiz, filtrados por matéria.
     
     Args:
-        subject: Optional specific subject filter
+        subject: Filtro opcional de matéria (ex: 'matematica')
     
     Returns:
-        TopicListResponse: Structured response with topics
+        TopicListResponse: Lista de tópicos.
     """
     try:
         from app.agents.quiz_agent import QuizAgent
@@ -207,10 +210,10 @@ async def get_quiz_topics(subject: Optional[str] = None):
 @router.get('/quiz/difficulties', response_model=DifficultyListResponse)
 async def get_quiz_difficulties():
     """
-    Returns available difficulty levels for quizzes.
+    Retorna os níveis de dificuldade disponíveis para quizzes.
     
     Returns:
-        DifficultyListResponse: Structured response with difficulties
+        DifficultyListResponse: Lista de dificuldades (facil, medio, dificil).
     """
     try:
         from app.agents.quiz_agent import QuizAgent
@@ -238,10 +241,10 @@ async def get_quiz_difficulties():
 @router.get('/study/intensities', response_model=IntensityListResponse)
 async def get_study_intensities():
     """
-    Returns available intensity levels for study plans.
+    Retorna os níveis de intensidade disponíveis para planos de estudo.
     
     Returns:
-        IntensityListResponse: Structured response with intensities
+        IntensityListResponse: Lista de intensidades (light, moderate, intensive, extreme).
     """
     try:
         from app.agents.study_plan_agent import StudyPlanAgent
@@ -269,13 +272,13 @@ async def get_study_intensities():
 @router.post('/create', response_model=AgentCreationResponse)
 async def create_agent_instance(body: AgentCreationRequest):
     """
-    Creates an agent instance and returns its configuration.
+    Cria uma instância de agente e retorna sua configuração.
     
     Args:
-        body: Request with agent creation parameters
+        body: Parâmetros de criação do agente.
         
     Returns:
-        AgentCreationResponse: Structured response with agent creation info
+        AgentCreationResponse: Detalhes do agente criado.
     """
     try:
         # Generate session ID if not provided
@@ -284,7 +287,7 @@ async def create_agent_instance(body: AgentCreationRequest):
         # Create the agent
         agent = get_agent(
             agent_id=body.agent_id,
-            model_id='gemini-2.5-flash',
+            model_id=settings.gemini_model,
             user_id=body.user_id,
             session_id=session_id,
             debug_mode=body.debug_mode,
@@ -296,7 +299,7 @@ async def create_agent_instance(body: AgentCreationRequest):
         # Build configuration dict
         configuration = {
             "agent_id": body.agent_id,
-            "model": "gemini-2.5-flash",
+            "model": settings.gemini_model,
             "user_id": body.user_id,
             "debug_mode": body.debug_mode
         }
@@ -342,7 +345,7 @@ def _create_agent_run_response(
     metadata = AgentRunMetadata(
         agent_id=agent_type,
         agent_name=agent.name,
-        model_used="gemini-2.5-flash",
+        model_used=settings.gemini_model,
         temperature=0.7,  # Default, could be extracted from agent
         max_tokens=2048,  # Default, could be extracted from agent
         processing_time_ms=processing_time_ms,
@@ -383,18 +386,26 @@ async def run_agent(
     intensity: Optional[str] = None
 ):
     """
-    Execute an agent with the provided message.
+    Executa um agente específico com uma mensagem.
+    
+    Este endpoint permite interagir diretamente com um agente (Tutor, Quiz, etc) sem passar pelo orquestrador.
     
     Args:
-        agent_id: Type of agent to execute
-        body: Request with message and execution parameters
-        subject: Optional subject parameter
-        difficulty: Optional difficulty parameter  
-        intensity: Optional intensity parameter
+        agent_id: Tipo de agente (tutor, quiz, essay_grader, study_plan)
+        body: Corpo da requisição contendo a mensagem
+        subject: (Opcional) Matéria específica
+        difficulty: (Opcional) Nível de dificuldade
+        intensity: (Opcional) Intensidade do plano de estudos
         
     Returns:
-        Union[AgentRunResponse, QuizResponse, EssayGradeResponse, StudyPlanResponse, TutorResponse]:
-            Structured response based on agent type
+        Resposta estruturada dependendo do tipo de agente.
+        
+    Example:
+        POST /api/v1/agents/tutor/runs
+        {
+            "message": "Explique a fórmula de Bhaskara",
+            "session_id": "optional-session-id"
+        }
     """
     try:
         start_time = time.time()
@@ -402,7 +413,7 @@ async def run_agent(
         # Create the agent
         agent = get_agent(
             agent_id=agent_id,
-            model_id='gemini-2.5-flash',
+            model_id=settings.gemini_model,
             user_id=body.user_id,
             session_id=body.session_id,
             debug_mode=True,

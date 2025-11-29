@@ -4,9 +4,145 @@ Backend API multi-agent especializado em preparação para o ENEM (Exame Naciona
 
 ## Status do Projeto
 
-**Progresso**: 83% concluído (5 de 6 agents implementados)  
-**Status**: Pronto para produção  
-**Última atualização**: Janeiro 2025
+**Progresso**: 100% concluído (6 de 6 agents implementados)  
+**Status**: Pronto para produção (POC)  
+**Última atualização**: Novembro 2025
+
+## Agents Disponíveis
+
+### Operacionais (6/6)
+
+1. **OrchestratorAgent** - Coordenador Central
+   - Endpoint: `POST /api/v1/orchestrator/chat`
+   - Função: Roteamento inteligente de intenções usando IA
+   - Capacidade: Redireciona para Tutor, Quiz, Essay ou StudyPlan
+
+2. **TutorAgent** - Tutor educacional especializado  
+   - Endpoint: `POST /api/v1/agents/tutor/runs`
+   - Função: Ensino personalizado em 13 matérias ENEM
+   - Parâmetros: `subject` (matematica, portugues, fisica, etc.)
+
+3. **QuizAgent** - Gerador de quizzes ENEM
+   - Endpoint: `POST /api/v1/agents/quiz/runs`  
+   - Função: Geração e avaliação de questões estilo ENEM
+   - Parâmetros: `subject`, `difficulty` (facil, medio, dificil)
+
+4. **EssayGraderAgent** - Corretor de redações
+   - Endpoint: `POST /api/v1/agents/essay_grader/runs`
+   - Função: Correção baseada nas 5 competências ENEM
+   - Features: Notas 0-200, feedback detalhado
+
+5. **StudyPlanAgent** - Criador de planos de estudo
+   - Endpoint: `POST /api/v1/agents/study_plan/runs`
+   - Função: Planos personalizados com múltiplos níveis
+   - Parâmetros: `intensity` (light, moderate, intensive, extreme)
+
+6. **TestAgent** - Validação do sistema
+   - Endpoint: `POST /api/v1/agents/test_enem/runs`
+   - Função: Testes de infraestrutura
+
+## Quick Start
+
+### Pré-requisitos
+- Docker e Docker Compose
+- UV package manager (recomendado para dev local)
+- Google API Key (Gemini)
+
+### Instalação
+
+```bash
+# 1. Clone o repositório
+git clone <repository-url>
+cd edtech-agent-api
+
+# 2. Configure as variáveis de ambiente
+cp example.env .env
+# Edite .env com sua GOOGLE_API_KEY
+
+# 3. Instale dependências (Local)
+uv sync
+
+# 4. Inicie os serviços (Docker)
+docker-compose up -d
+
+# 5. Verifique o status
+curl http://localhost:8000/api/v1/health/
+```
+
+### Uso Básico
+
+```bash
+# Chat com o Orquestrador (Roteamento Automático)
+curl -X POST "http://localhost:8000/api/v1/orchestrator/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Quero estudar matemática", "user_id": "user123"}'
+
+# Listar agents disponíveis
+curl http://localhost:8000/api/v1/agents/info
+```
+
+## Arquitetura
+
+### Stack Tecnológica
+- **Framework IA**: Agno 1.4.6
+- **Modelo**: Google Gemini 2.5 Flash  
+- **API**: FastAPI + SQLModel
+- **Banco**: PostgreSQL + Qdrant (vector database)
+- **Container**: Docker + UV package manager
+
+### Estrutura do Projeto
+```
+app/
+├── agents/           # Agents implementados
+│   ├── tools/        # Ferramentas dos agentes (NOVO)
+│   ├── base_enem_agent.py
+│   ├── orchestrator_agent.py
+│   └── ...
+├── api/              # Endpoints FastAPI
+├── core/             # Configurações
+└── main.py           # App principal
+tests/                # Suíte de Testes (NOVO)
+docs/                 # Documentação (NOVO)
+```
+
+## API Endpoints
+
+### Principais
+- `POST /api/v1/orchestrator/chat` - Chat inteligente
+- `GET /api/v1/agents/` - Listar agents
+- `POST /api/v1/agents/{agent_id}/runs` - Executar agent específico
+- `GET /api/v1/health/` - Health check
+
+### Documentação
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+## Testes
+
+Consulte [docs/TESTING.md](docs/TESTING.md) para detalhes completos.
+
+```bash
+# Executar todos os testes
+uv run pytest tests/
+```
+
+## Documentação Detalhada
+
+- **Mapeamento de Agentes**: [`docs/AGENTES_MAPEAMENTO.md`](docs/AGENTES_MAPEAMENTO.md)
+- **Guia de Testes**: [`docs/TESTING.md`](docs/TESTING.md)
+- **Roadmap**: [`docs/ROADMAP_MELHORIAS.md`](docs/ROADMAP_MELHORIAS.md)
+
+## Contribuição
+
+1. Fork o projeto
+2. Crie uma branch (`git checkout -b feature/nova-feature`)
+3. Commit suas mudanças (`git commit -m 'Adiciona nova feature'`)
+4. Push para a branch (`git push origin feature/nova-feature`)
+5. Abra um Pull Request
+
+## Licença
+
+Este projeto está sob a licença [MIT](LICENSE).
 
 ## Agents Disponíveis
 

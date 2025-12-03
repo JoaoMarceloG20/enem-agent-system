@@ -8,7 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
-.claude/
+# .claude/
 
 # Python-generated files
 __pycache__/

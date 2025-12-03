@@ -23,6 +23,7 @@ from app.api.models import (
     DifficultyEnum,
     ErrorResponse
 )
+from app.utils.quiz_parser import parse_quiz_content, QuizParsingError
 
 router = APIRouter()
 
@@ -104,13 +105,13 @@ class QuizDifficultyResponse(BaseResponse):
 async def get_quiz_info():
     """
     Get detailed information about the QuizAgent.
-    
+
     Returns comprehensive information about capabilities, subjects, and configuration.
     """
     try:
         from app.agents.quiz_agent import QuizAgent
         from app.agents.tutor_agent import TutorAgent
-        
+
         # Get subjects with proper formatting
         subjects_data = []
         total_topics = 0
@@ -123,7 +124,7 @@ async def get_quiz_info():
                 "topic_count": str(topic_count)  # Convert to string for Pydantic validation
             })
             total_topics += topic_count
-        
+
         # Get difficulty levels
         difficulty_levels = []
         for key, info in QuizAgent.DIFFICULTY_LEVELS.items():
@@ -132,7 +133,7 @@ async def get_quiz_info():
                 "name": info["description"],
                 "weight": str(info["weight"])  # Convert to string for consistency
             })
-        
+
         capabilities = [
             "Geração de questões estilo ENEM",
             "Múltiplos níveis de dificuldade",
@@ -142,7 +143,7 @@ async def get_quiz_info():
             "Recomendações personalizadas",
             "Simulados adaptativos"
         ]
-        
+
         return QuizInfoResponse(
             message="Informações do QuizAgent recuperadas com sucesso",
             agent_name="Quiz ENEM - Gerador de Questões",
@@ -152,7 +153,7 @@ async def get_quiz_info():
             capabilities=capabilities,
             total_topics=total_topics
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -164,9 +165,10 @@ async def get_quiz_info():
 async def generate_quiz(request: QuizGenerationRequest):
     """
     Generate a custom quiz based on specified criteria.
-    
+
     Creates questions tailored to subject, difficulty, and specific topics.
     """
+    
     try:
         # Create quiz agent
         agent = get_agent(
@@ -176,13 +178,13 @@ async def generate_quiz(request: QuizGenerationRequest):
             user_id=request.user_id,
             session_id=request.session_id
         )
-        
+
         # Build generation prompt
         prompt = _build_generation_prompt(request)
-        
+
         # Execute quiz generation
         response = agent.run(prompt)
-        
+
         # Extract content from response
         if hasattr(response, 'content'):
             content = response.content
@@ -190,15 +192,29 @@ async def generate_quiz(request: QuizGenerationRequest):
             content = response.messages[-1].content
         else:
             content = str(response)
-        
-        # Parse generated questions (simplified for demo)
-        questions = _parse_generated_questions(content, request)
+
+        # Parse generated questions using robust parser
+        try:
+            print(content)
+            questions = parse_quiz_content(
+                content=content,
+                expected_questions=request.num_questions,
+                default_subject=request.subject,
+                default_difficulty=request.difficulty
+            )
+        except QuizParsingError as e:
+            raise e
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Erro ao processar questões geradas: {str(e)} | {request.dict()}",
+                
+            )
         quiz_id = str(uuid.uuid4())
-        
+
         # Calculate quiz metadata
         estimated_time = request.num_questions * 3  # 3 minutes per question
         topics_covered = request.topics or _get_default_topics(request.subject)
-        
+
         # Create metadata
         metadata = AgentRunMetadata(
             agent_id="quiz",
@@ -209,17 +225,19 @@ async def generate_quiz(request: QuizGenerationRequest):
             subject=request.subject,
             difficulty=request.difficulty
         )
-        
-        return QuizGenerationResponse(
+
+        # Create response with questions first - content will be auto-generated
+        response = QuizGenerationResponse(
             message=f"Quiz gerado com sucesso - {request.num_questions} questões",
-            content=content,
+            content="",  # Will be auto-generated from questions
             metadata=metadata,
             session_id=request.session_id or str(uuid.uuid4()),
             run_id=str(uuid.uuid4()),
             questions=questions,
             quiz_metadata={
                 "generation_params": request.dict(),
-                "created_at": datetime.now().isoformat()
+                "created_at": datetime.now().isoformat(),
+                "original_llm_content": content  # Store original for debugging
             },
             total_questions=request.num_questions,
             estimated_time=estimated_time,
@@ -228,8 +246,11 @@ async def generate_quiz(request: QuizGenerationRequest):
             quiz_id=quiz_id,
             instructions=_get_quiz_instructions(request.difficulty)
         )
-        
+
+        return response
+
     except Exception as e:
+        raise e
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro na geração do quiz: {str(e)}"
@@ -244,7 +265,7 @@ async def quick_generate_question(
 ):
     """
     Quickly generate a single question for immediate practice.
-    
+
     Perfect for quick study sessions and topic-specific practice.
     """
     try:
@@ -254,7 +275,7 @@ async def quick_generate_question(
             subject=subject,
             difficulty=difficulty
         )
-        
+
         # Build quick prompt
         if topic:
             prompt = f"Crie uma questão de {difficulty} sobre {topic}"
@@ -262,29 +283,41 @@ async def quick_generate_question(
             prompt = f"Crie uma questão de {subject} nível {difficulty}"
         else:
             prompt = f"Crie uma questão ENEM nível {difficulty}"
-        
+
         # Execute generation
         response = agent.run(prompt)
         content = response.content if hasattr(response, 'content') else str(response)
-        
-        # Parse single question
-        question = _parse_single_question(content, subject, difficulty, topic)
+
+        # Parse single question using robust parser
+        try:
+            questions = parse_quiz_content(
+                content=content,
+                expected_questions=1,
+                default_subject=subject,
+                default_difficulty=difficulty
+            )
+            question = questions[0]
+        except QuizParsingError as e:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Erro ao processar questão gerada: {str(e)}"
+            )
         session_id = str(uuid.uuid4())
-        
+
         context = {
             "subject": subject,
             "difficulty": difficulty,
             "topic": topic,
             "generated_at": datetime.now().isoformat()
         }
-        
+
         return QuickQuizResponse(
             message="Questão rápida gerada com sucesso",
             question=question,
             quiz_session_id=session_id,
             context=context
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -296,7 +329,7 @@ async def quick_generate_question(
 async def submit_quiz(request: QuizSubmissionRequest):
     """
     Submit quiz answers and get detailed results with analysis.
-    
+
     Provides comprehensive feedback and personalized recommendations.
     """
     try:
@@ -305,16 +338,16 @@ async def submit_quiz(request: QuizSubmissionRequest):
         correct_answers = _grade_quiz(request.quiz_id, request.answers)
         score_percentage = (correct_answers / total_questions) * 100
         grade = _calculate_grade(score_percentage)
-        
+
         # Generate detailed results
         detailed_results = _generate_detailed_results(request.quiz_id, request.answers)
-        
+
         # Performance analysis
         performance_analysis = _analyze_performance(detailed_results, score_percentage)
-        
+
         # Generate recommendations
         recommendations = _generate_recommendations(performance_analysis)
-        
+
         return QuizResultResponse(
             message="Quiz avaliado com sucesso",
             quiz_id=request.quiz_id,
@@ -327,7 +360,7 @@ async def submit_quiz(request: QuizSubmissionRequest):
             recommendations=recommendations,
             time_taken=request.time_taken
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -339,22 +372,22 @@ async def submit_quiz(request: QuizSubmissionRequest):
 async def get_subject_topics(subject: SubjectEnum):
     """
     Get all available topics for a specific subject.
-    
+
     Returns organized list of topics with metadata for quiz generation.
     """
     try:
         from app.agents.quiz_agent import QuizAgent
         from app.agents.tutor_agent import TutorAgent
-        
+
         if subject not in QuizAgent.ENEM_TOPICS:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Tópicos para {subject} não encontrados"
             )
-        
+
         subject_name = TutorAgent.ENEM_SUBJECTS.get(subject, subject.title())
         raw_topics = QuizAgent.ENEM_TOPICS[subject]
-        
+
         # Enhance topics with metadata
         topics = []
         for i, topic in enumerate(raw_topics):
@@ -366,7 +399,7 @@ async def get_subject_topics(subject: SubjectEnum):
                 "estimated_questions": _estimate_available_questions(topic),
                 "description": _get_topic_description(topic)
             })
-        
+
         return TopicsResponse(
             message=f"Tópicos de {subject_name} recuperados com sucesso",
             subject=subject,
@@ -374,7 +407,7 @@ async def get_subject_topics(subject: SubjectEnum):
             topics=topics,
             total_count=len(topics)
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -388,12 +421,12 @@ async def get_subject_topics(subject: SubjectEnum):
 async def get_difficulty_levels():
     """
     Get all available difficulty levels with descriptions.
-    
+
     Returns comprehensive information about each difficulty level.
     """
     try:
         from app.agents.quiz_agent import QuizAgent
-        
+
         difficulties = []
         for key, info in QuizAgent.DIFFICULTY_LEVELS.items():
             difficulties.append({
@@ -408,7 +441,7 @@ async def get_difficulty_levels():
             message="Níveis de dificuldade recuperados com sucesso",
             difficulties=difficulties
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -429,19 +462,74 @@ def _get_subject_icon(subject: str) -> str:
     return icons.get(subject, "📖")
 
 def _build_generation_prompt(request: QuizGenerationRequest) -> str:
-    """Build prompt for quiz generation"""
+    """Build prompt for quiz generation with clear examples"""
     subject_part = f" de {request.subject}" if request.subject else ""
     topics_part = f" focando em: {', '.join(request.topics)}" if request.topics else ""
-    
-    return f"""Crie {request.num_questions} questões{subject_part} no nível {request.difficulty}{topics_part}.
-    
-Cada questão deve seguir o padrão ENEM com:
-- Contexto/situação-problema
-- 5 alternativas (A, B, C, D, E)
-- Gabarito com justificativa
-- Tópico abordado"""
+
+    # Create few-shot examples for clarity
+    example_section = """
+EXEMPLO DE FORMATO ESPERADO (PARA 2 QUESTÕES):
+
+QUESTÃO 1:
+**Contexto:** [Situação-problema detalhada]
+
+**Pergunta:** [Enunciado da questão]
+
+**Alternativas:**
+A) [Primeira alternativa]
+B) [Segunda alternativa]
+C) [Terceira alternativa]
+D) [Quarta alternativa]
+E) [Quinta alternativa]
+
+**Gabarito:** C
+**Justificativa:** [Explicação detalhada da resposta correta]
+**Tópico:** [Tópico específico abordado]
+
+QUESTÃO 2:
+**Contexto:** [Situação-problema detalhada]
+
+**Pergunta:** [Enunciado da questão]
+
+**Alternativas:**
+A) [Primeira alternativa]
+B) [Segunda alternativa]
+C) [Terceira alternativa]
+D) [Quarta alternativa]
+E) [Quinta alternativa]
+
+**Gabarito:** A
+**Justificativa:** [Explicação detalhada da resposta correta]
+**Tópico:** [Tópico específico abordado]
+
+---
+
+"""
+
+    return f"""Você deve criar EXATAMENTE {request.num_questions} questões{subject_part} no nível {request.difficulty}{topics_part}.
+
+INSTRUÇÕES IMPORTANTES:
+- Cada questão é INDEPENDENTE e COMPLETA
+- SEMPRE gere {request.num_questions} questões diferentes (não {request.num_questions} alternativas!)
+- Cada questão deve ter EXATAMENTE 5 alternativas (A, B, C, D, E)
+- Siga rigorosamente o formato do exemplo abaixo
+
+{example_section}
+
+AGORA CRIE {request.num_questions} QUESTÕES SEGUINDO EXATAMENTE ESTE FORMATO:
+
+Requisitos por questão:
+- Contexto realista estilo ENEM
+- Enunciado claro e objetivo
+- 5 alternativas bem elaboradas (A, B, C, D, E)
+- Apenas 1 alternativa correta
+- Justificativa pedagógica completa
+- Tópico específico identificado
+
+LEMBRE-SE: Se solicitadas {request.num_questions} questões, deve gerar {request.num_questions} blocos completos de questão, cada um com suas próprias 5 alternativas."""
 
 def _parse_generated_questions(content: str, request: QuizGenerationRequest) -> List[QuizQuestion]:
+    print('questions_content', content)
     """Parse generated questions from content"""
     # Simplified parsing for demo
     questions = []
@@ -452,7 +540,7 @@ def _parse_generated_questions(content: str, request: QuizGenerationRequest) -> 
             context=f"Contexto da questão {i+1}",
             alternatives={
                 "A": "Alternativa A",
-                "B": "Alternativa B", 
+                "B": "Alternativa B",
                 "C": "Alternativa C",
                 "D": "Alternativa D",
                 "E": "Alternativa E"
@@ -464,10 +552,10 @@ def _parse_generated_questions(content: str, request: QuizGenerationRequest) -> 
             subject=request.subject or SubjectEnum.MATEMATICA
         )
         questions.append(question)
-    
+
     return questions
 
-def _parse_single_question(content: str, subject: Optional[SubjectEnum], 
+def _parse_single_question(content: str, subject: Optional[SubjectEnum],
                           difficulty: DifficultyEnum, topic: Optional[str]) -> QuizQuestion:
     """Parse single question from content"""
     return QuizQuestion(
@@ -489,7 +577,7 @@ def _get_default_topics(subject: Optional[SubjectEnum]) -> List[str]:
     """Get default topics for subject"""
     if not subject:
         return ["Tópico geral"]
-    
+
     from app.agents.quiz_agent import QuizAgent
     return QuizAgent.ENEM_TOPICS.get(subject, ["Tópico geral"])[:3]
 
@@ -533,7 +621,7 @@ def _generate_detailed_results(quiz_id: str, answers: Dict[str, str]) -> List[Di
         })
     return results
 
-def _analyze_performance(detailed_results: List[Dict[str, Any]], 
+def _analyze_performance(detailed_results: List[Dict[str, Any]],
                         score_percentage: float) -> Dict[str, Any]:
     """Analyze performance and generate insights"""
     return {
@@ -577,7 +665,7 @@ def _get_typical_time_per_question(difficulty: str) -> str:
     """Get typical time per question for difficulty"""
     times = {
         "facil": "2-3 minutos",
-        "medio": "3-4 minutos", 
+        "medio": "3-4 minutos",
         "dificil": "4-5 minutos"
     }
     return times.get(difficulty, "3 minutos")

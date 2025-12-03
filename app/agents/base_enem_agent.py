@@ -168,7 +168,7 @@ class BaseENEMAgent(ABC):
         model_id: str = settings.gemini_model,
         user_id: Optional[str] = None,
         session_id: Optional[str] = None,
-        debug_mode: bool = True,
+        debug_mode: bool = False,
         subject: Optional[str] = None,
     ) -> Agent:
         """

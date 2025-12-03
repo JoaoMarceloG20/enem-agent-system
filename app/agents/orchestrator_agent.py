@@ -135,6 +135,6 @@ def get_orchestrator_agent(
     model_id: str = settings.gemini_model,
     user_id: str = None,
     session_id: str = None,
-    debug_mode: bool = True
+    debug_mode: bool = False
 ):
     return OrchestratorAgent()

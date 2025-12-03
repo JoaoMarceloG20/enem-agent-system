@@ -26,7 +26,7 @@ def get_agent(
     model_id: str = 'gemini-2.5-flash',
     user_id: Optional[str] = None,
     session_id: Optional[str] = None,
-    debug_mode: bool = True,
+    debug_mode: bool = False,
     subject: Optional[str] = None,
     difficulty: Optional[str] = None,
     intensity: Optional[str] = None,

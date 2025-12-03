@@ -365,7 +365,7 @@ def get_study_plan_agent(
     model_id: str = 'gemini-2.5-flash',
     user_id: str = None,
     session_id: str = None,
-    debug_mode: bool = True
+    debug_mode: bool = False
 ):
     """
     Factory function para criar um StudyPlanAgent.

@@ -19,7 +19,8 @@ from app.api.models import (
     StatusEnum,
     BaseResponse,
     SubjectEnum,
-    ErrorResponse
+    ErrorResponse,
+    SubjectListResponse,
 )
 
 router = APIRouter()
@@ -259,7 +260,7 @@ async def get_learning_path(
         )
 
 
-@router.get("/subjects", response_model=BaseResponse)
+@router.get("/subjects", response_model=SubjectListResponse)
 async def get_supported_subjects():
     """
     Get list of all subjects supported by the TutorAgent.
@@ -280,10 +281,10 @@ async def get_supported_subjects():
                 "estimated_hours": _get_estimated_hours(key)
             })
         
-        return BaseResponse(
+        return SubjectListResponse(
             status=StatusEnum.SUCCESS,
             message="Matérias suportadas recuperadas com sucesso",
-            timestamp=datetime.now()
+            subjects=subjects_data
         )
         
     except Exception as e:

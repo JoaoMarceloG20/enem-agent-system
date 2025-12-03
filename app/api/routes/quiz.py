@@ -94,6 +94,12 @@ class TopicsResponse(BaseResponse):
     total_count: int
 
 
+class QuizDifficultyResponse(BaseResponse):
+    """Response for quiz difficulty metadata"""
+    status: StatusEnum = StatusEnum.SUCCESS
+    difficulties: List[Dict[str, Any]]
+
+
 @router.get("/info", response_model=QuizInfoResponse)
 async def get_quiz_info():
     """
@@ -378,7 +384,7 @@ async def get_subject_topics(subject: SubjectEnum):
         )
 
 
-@router.get("/difficulties", response_model=BaseResponse)
+@router.get("/difficulties", response_model=QuizDifficultyResponse)
 async def get_difficulty_levels():
     """
     Get all available difficulty levels with descriptions.
@@ -398,10 +404,9 @@ async def get_difficulty_levels():
                 "typical_time": _get_typical_time_per_question(key)
             })
         
-        return BaseResponse(
-            status=StatusEnum.SUCCESS,
+        return QuizDifficultyResponse(
             message="Níveis de dificuldade recuperados com sucesso",
-            timestamp=datetime.now()
+            difficulties=difficulties
         )
         
     except Exception as e:

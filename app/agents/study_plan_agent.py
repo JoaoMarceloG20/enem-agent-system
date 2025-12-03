@@ -252,6 +252,9 @@ class StudyPlanAgent(BaseENEMAgent):
         """Tools específicas do StudyPlanAgent"""
         try:
             from app.agents.tools.study_plan_tools import (
+                generate_calendar_schedule,
+                save_study_plan,
+                get_current_plan,
                 create_study_plan,
                 get_study_plan,
                 list_user_plans,
@@ -264,6 +267,9 @@ class StudyPlanAgent(BaseENEMAgent):
             )
             
             return [
+                generate_calendar_schedule,
+                save_study_plan,
+                get_current_plan,
                 create_study_plan,
                 get_study_plan,
                 list_user_plans,

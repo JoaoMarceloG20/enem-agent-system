@@ -195,8 +195,47 @@ def get_agents_health() -> Dict[str, Any]:
     except Exception as e:
         agents_status['agents']['quiz'] = {'error': str(e), 'healthy': False}
     
-    # TODO: Add other agents as they are implemented
-    # EssayGraderAgent, StudyPlanAgent, OrchestratorAgent
+    # EssayGraderAgent health check
+    try:
+        from .essay_grader_agent import EssayGraderAgent
+        essay_agent = EssayGraderAgent()
+        essay_health = essay_agent.health_check()
+        
+        agents_status['agents']['essay_grader'] = essay_health
+        agents_status['total_agents'] += 1
+        if essay_health.get('healthy', False):
+            agents_status['healthy_agents'] += 1
+            
+    except Exception as e:
+        agents_status['agents']['essay_grader'] = {'error': str(e), 'healthy': False}
+
+    # StudyPlanAgent health check
+    try:
+        from .study_plan_agent import StudyPlanAgent
+        study_agent = StudyPlanAgent()
+        study_health = study_agent.health_check()
+        
+        agents_status['agents']['study_plan'] = study_health
+        agents_status['total_agents'] += 1
+        if study_health.get('healthy', False):
+            agents_status['healthy_agents'] += 1
+            
+    except Exception as e:
+        agents_status['agents']['study_plan'] = {'error': str(e), 'healthy': False}
+
+    # OrchestratorAgent health check
+    try:
+        from .orchestrator_agent import OrchestratorAgent
+        orchestrator_agent = OrchestratorAgent()
+        orchestrator_health = orchestrator_agent.health_check()
+        
+        agents_status['agents']['orchestrator'] = orchestrator_health
+        agents_status['total_agents'] += 1
+        if orchestrator_health.get('healthy', False):
+            agents_status['healthy_agents'] += 1
+            
+    except Exception as e:
+        agents_status['agents']['orchestrator'] = {'error': str(e), 'healthy': False}
     
     agents_status['health_percentage'] = (
         (agents_status['healthy_agents'] / agents_status['total_agents'] * 100) 

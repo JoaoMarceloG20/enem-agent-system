@@ -23,8 +23,12 @@ wheels/
 .env
 
 .idea/
+.vscode/
 
 zz_teste_stuff/
+tmp/
+logs/
+*.log
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,pycharm+all,macos
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,pycharm+all,macos

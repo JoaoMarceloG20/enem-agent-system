@@ -28,6 +28,22 @@ A API do **ENEM Tutor System** oferece acesso a 3 agentes especializados para pr
 - **Max Tokens**: 3000
 - **Parâmetros especiais**: `subject`, `difficulty`
 
+### 4. **EssayGraderAgent** (`essay_grader`)
+- **Propósito**: Correção de redações nas 5 competências
+- **Temperature**: 0.2
+- **Max Tokens**: 4000
+- **Parâmetros especiais**: Nenhum
+
+### 5. **StudyPlanAgent** (`study_plan`)
+- **Propósito**: Criação de planos de estudo personalizados
+- **Temperature**: 0.3
+- **Max Tokens**: 3000
+- **Parâmetros especiais**: `intensity`
+
+### 6. **OrchestratorAgent** (`orchestrator`)
+- **Propósito**: Roteamento inteligente de intenções
+- **Endpoint Exclusivo**: `/api/v1/orchestrator/chat`
+
 ---
 
 ## 📊 Endpoints Informativos
@@ -39,7 +55,7 @@ GET /agents
 
 **Response:**
 ```json
-["test_enem", "tutor", "quiz"]
+["test_enem", "tutor", "quiz", "essay_grader", "study_plan", "orchestrator"]
 ```
 
 ### Informações Detalhadas dos Agents
@@ -144,6 +160,35 @@ GET /agents/quiz/difficulties
   "dificil": {
     "description": "Difícil - Análise e síntese",
     "weight": 0.2
+  }
+}
+```
+
+---
+
+### Chat Inteligente (Orchestrator)
+```http
+POST /orchestrator/chat
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "message": "Quero um quiz de matemática difícil",
+  "user_id": "student123",
+  "session_id": "session_abc"
+}
+```
+
+**Response:**
+```json
+{
+  "content": "Claro! Vou gerar um quiz de matemática nível difícil para você...",
+  "agent_id": "quiz",
+  "metadata": {
+    "routed_to": "quiz",
+    "reason": "User requested a math quiz"
   }
 }
 ```
@@ -472,10 +517,13 @@ curl http://localhost:8000/api/v1/agents/info
 
 ## 🚀 Resumo das Capacidades
 
-- ✅ **3 Agents especializados** (Test, Tutor, Quiz)
+- ✅ **6 Agents especializados** (Orchestrator, Tutor, Quiz, Essay, StudyPlan, Test)
 - ✅ **13 matérias ENEM** suportadas
 - ✅ **99 tópicos mapeados** para quiz
 - ✅ **3 níveis de dificuldade** (fácil, médio, difícil)
+- ✅ **Correção de Redação** com feedback detalhado
+- ✅ **Planos de Estudo** personalizados
+- ✅ **Roteamento Inteligente** via Orchestrator
 - ✅ **Context switching** por matéria e dificuldade
 - ✅ **Streaming e não-streaming** suportado
 - ✅ **Health monitoring** completo

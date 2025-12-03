@@ -84,8 +84,14 @@ class TutorAgent(BaseENEMAgent):
     
     def get_agent_tools(self) -> List[Any]:
         """Tools específicas do TutorAgent"""
-        # Temporariamente desabilitado para debug
-        return []
+        try:
+            from app.agents.tools.tutor_tools import (
+                search_educational_content,
+                get_curriculum_guidelines
+            )
+            return [search_educational_content, get_curriculum_guidelines]
+        except ImportError:
+            return []
     
     def get_agent_temperature(self) -> float:
         """Temperature específica para ensino (balanceada)"""

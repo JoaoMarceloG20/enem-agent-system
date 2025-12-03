@@ -162,7 +162,8 @@ class EssayGraderAgent(BaseENEMAgent):
         """Tools específicas do EssayGraderAgent"""
         try:
             from app.agents.tools.essay_grader_tools import (
-                grade_essay,
+                grade_essay_competencies,
+                save_essay_feedback,
                 get_essay_history,
                 get_essay_statistics,
                 suggest_essay_theme,
@@ -173,7 +174,8 @@ class EssayGraderAgent(BaseENEMAgent):
             )
             
             return [
-                grade_essay,
+                grade_essay_competencies,
+                save_essay_feedback,
                 get_essay_history,
                 get_essay_statistics,
                 suggest_essay_theme,

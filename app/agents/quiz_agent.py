@@ -256,8 +256,14 @@ Tópicos principais: {topics}... (e outros)"""
     
     def get_agent_tools(self) -> List[Any]:
         """Tools específicas do QuizAgent"""
-        # Temporariamente desabilitado para debug do datetime
-        return []
+        try:
+            from app.agents.tools.quiz_tools import (
+                save_quiz_result,
+                get_user_performance
+            )
+            return [save_quiz_result, get_user_performance]
+        except ImportError:
+            return []
     
     def get_agent_temperature(self) -> float:
         """Temperature específica para geração de questões (mais determinística)"""

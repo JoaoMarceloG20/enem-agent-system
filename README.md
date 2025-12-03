@@ -1,372 +1,82 @@
 # EdTech Agent API
 
-Backend API multi-agent especializado em preparação para o ENEM (Exame Nacional do Ensino Médio). Sistema baseado no framework Agno com Google Gemini 2.5 Flash.
+Backend FastAPI para um sistema multi‑agente focado em preparação para o ENEM. Usa Agno + Google Gemini, com PostgreSQL para histórico e Qdrant para vetores.
 
-## Status do Projeto
+## Status rápido
+- Progresso: 5/6 agents implementados (Orchestrator disponível em modo experimental).
+- Última revisão: jan/2025.
+- Pendências conhecidas: PDFs de knowledge base não estão no repositório; playground vem desativado por padrão; instalar dependências requer acesso à internet.
 
-**Progresso**: 100% concluído (6 de 6 agents implementados)  
-**Status**: Pronto para produção (POC)  
-**Última atualização**: Novembro 2025
+## Stack
+- Python 3.12, FastAPI, SQLModel.
+- Agno 1.4.6 com Google Gemini 2.5 Flash.
+- PostgreSQL + Qdrant (docker-compose).
+- Gerenciador: `uv` (recomendado) ou `pip` via venv.
 
-## Agents Disponíveis
+## Pré-requisitos
+- Python 3.12.
+- Docker e Docker Compose (para serviços de infra).
+- Chave `GOOGLE_API_KEY` para usar os agentes reais (testes usam mocks).
 
-### Operacionais (6/6)
-
-1. **OrchestratorAgent** - Coordenador Central
-   - Endpoint: `POST /api/v1/orchestrator/chat`
-   - Função: Roteamento inteligente de intenções usando IA
-   - Capacidade: Redireciona para Tutor, Quiz, Essay ou StudyPlan
-
-2. **TutorAgent** - Tutor educacional especializado  
-   - Endpoint: `POST /api/v1/agents/tutor/runs`
-   - Função: Ensino personalizado em 13 matérias ENEM
-   - Parâmetros: `subject` (matematica, portugues, fisica, etc.)
-
-3. **QuizAgent** - Gerador de quizzes ENEM
-   - Endpoint: `POST /api/v1/agents/quiz/runs`  
-   - Função: Geração e avaliação de questões estilo ENEM
-   - Parâmetros: `subject`, `difficulty` (facil, medio, dificil)
-
-4. **EssayGraderAgent** - Corretor de redações
-   - Endpoint: `POST /api/v1/agents/essay_grader/runs`
-   - Função: Correção baseada nas 5 competências ENEM
-   - Features: Notas 0-200, feedback detalhado
-
-5. **StudyPlanAgent** - Criador de planos de estudo
-   - Endpoint: `POST /api/v1/agents/study_plan/runs`
-   - Função: Planos personalizados com múltiplos níveis
-   - Parâmetros: `intensity` (light, moderate, intensive, extreme)
-
-6. **TestAgent** - Validação do sistema
-   - Endpoint: `POST /api/v1/agents/test_enem/runs`
-   - Função: Testes de infraestrutura
-
-## Quick Start
-
-### Pré-requisitos
-- Docker e Docker Compose
-- UV package manager (recomendado para dev local)
-- Google API Key (Gemini)
-
-### Instalação
-
+## Setup local (dev)
 ```bash
-# 1. Clone o repositório
-git clone <repository-url>
-cd edtech-agent-api
+# 1) Ambiente
+python3 -m venv .venv
+. .venv/bin/activate
+# ou: uv venv --python 3.12
 
-# 2. Configure as variáveis de ambiente
+# 2) Variáveis de ambiente
 cp example.env .env
-# Edite .env com sua GOOGLE_API_KEY
+# edite GOOGLE_API_KEY e credenciais do Postgres/Qdrant conforme necessário
 
-# 3. Instale dependências (Local)
-uv sync
+# 3) Dependências
+UV_CACHE_DIR=.uv_cache uv sync     # exige internet
+# se preferir pip:
+# pip install -e .[dev]
+```
 
-# 4. Inicie os serviços (Docker)
-docker-compose up -d
-
-# 5. Verifique o status
+## Rodar API (Docker)
+```bash
+docker-compose up -d  # sobe postgres (5433), qdrant (6335) e backend (8000)
 curl http://localhost:8000/api/v1/health/
 ```
 
-### Uso Básico
-
+## Rodar API local (sem Docker para app)
+Suba Postgres e Qdrant (via docker-compose ou externos), depois:
 ```bash
-# Chat com o Orquestrador (Roteamento Automático)
-curl -X POST "http://localhost:8000/api/v1/orchestrator/chat" \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Quero estudar matemática", "user_id": "user123"}'
-
-# Listar agents disponíveis
-curl http://localhost:8000/api/v1/agents/info
-```
-
-## Arquitetura
-
-### Stack Tecnológica
-- **Framework IA**: Agno 1.4.6
-- **Modelo**: Google Gemini 2.5 Flash  
-- **API**: FastAPI + SQLModel
-- **Banco**: PostgreSQL + Qdrant (vector database)
-- **Container**: Docker + UV package manager
-
-### Estrutura do Projeto
-```
-app/
-├── agents/           # Agents implementados
-│   ├── tools/        # Ferramentas dos agentes (NOVO)
-│   ├── base_enem_agent.py
-│   ├── orchestrator_agent.py
-│   └── ...
-├── api/              # Endpoints FastAPI
-├── core/             # Configurações
-└── main.py           # App principal
-tests/                # Suíte de Testes (NOVO)
-docs/                 # Documentação (NOVO)
-```
-
-## API Endpoints
-
-### Principais
-- `POST /api/v1/orchestrator/chat` - Chat inteligente
-- `GET /api/v1/agents/` - Listar agents
-- `POST /api/v1/agents/{agent_id}/runs` - Executar agent específico
-- `GET /api/v1/health/` - Health check
-
-### Documentação
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-## Testes
-
-Consulte [docs/TESTING.md](docs/TESTING.md) para detalhes completos.
-
-```bash
-# Executar todos os testes
-uv run pytest tests/
-```
-
-## Documentação Detalhada
-
-- **Mapeamento de Agentes**: [`docs/AGENTES_MAPEAMENTO.md`](docs/AGENTES_MAPEAMENTO.md)
-- **Guia de Testes**: [`docs/TESTING.md`](docs/TESTING.md)
-- **Roadmap**: [`docs/ROADMAP_MELHORIAS.md`](docs/ROADMAP_MELHORIAS.md)
-
-## Contribuição
-
-1. Fork o projeto
-2. Crie uma branch (`git checkout -b feature/nova-feature`)
-3. Commit suas mudanças (`git commit -m 'Adiciona nova feature'`)
-4. Push para a branch (`git push origin feature/nova-feature`)
-5. Abra um Pull Request
-
-## Licença
-
-Este projeto está sob a licença [MIT](LICENSE).
-
-## Agents Disponíveis
-
-### Operacionais (5/6)
-
-1. **TestAgent** - Validação do sistema
-   - Endpoint: `POST /api/v1/agents/test_enem/runs`
-   - Função: Testes de infraestrutura
-
-2. **TutorAgent** - Tutor educacional especializado  
-   - Endpoint: `POST /api/v1/agents/tutor/runs`
-   - Função: Ensino personalizado em 13 matérias ENEM
-   - Parâmetros: `subject` (matematica, portugues, fisica, etc.)
-
-3. **QuizAgent** - Gerador de quizzes ENEM
-   - Endpoint: `POST /api/v1/agents/quiz/runs`  
-   - Função: Geração e avaliação de questões estilo ENEM
-   - Parâmetros: `subject`, `difficulty` (facil, medio, dificil)
-
-4. **EssayGraderAgent** - Corretor de redações
-   - Endpoint: `POST /api/v1/agents/essay_grader/runs`
-   - Função: Correção baseada nas 5 competências ENEM
-   - Features: Notas 0-200, feedback detalhado
-
-5. **StudyPlanAgent** - Criador de planos de estudo
-   - Endpoint: `POST /api/v1/agents/study_plan/runs`
-   - Função: Planos personalizados com múltiplos níveis
-   - Parâmetros: `intensity` (light, moderate, intensive, extreme)
-
-### Pendente (1/6)
-
-6. **OrchestratorAgent** - Coordenador central (opcional)
-
-## Quick Start
-
-### Pré-requisitos
-- Docker e Docker Compose
-- UV package manager
-- Google API Key (Gemini)
-
-### Instalação
-
-```bash
-# 1. Clone o repositório
-git clone <repository-url>
-cd edtech-agent-api
-
-# 2. Configure as variáveis de ambiente
-cp example.env .env
-# Edite .env com sua GOOGLE_API_KEY
-
-# 3. Inicie os serviços
-docker-compose up -d
-
-# 4. Verifique o status
-curl http://localhost:8000/api/v1/health/
-```
-
-### Uso Básico
-
-```bash
-# Listar agents disponíveis
-curl http://localhost:8000/api/v1/agents/info
-
-# Criar um tutor de matemática
-curl -X POST "http://localhost:8000/api/v1/agents/create" \
-  -H "Content-Type: application/json" \
-  -d '{"agent_id": "tutor", "subject": "matematica"}'
-
-# Fazer uma pergunta ao tutor
-curl -X POST "http://localhost:8000/api/v1/agents/tutor/runs" \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Explique funções quadráticas", "stream": false}'
-```
-
-## Arquitetura
-
-### Stack Tecnológica
-- **Framework IA**: Agno 1.4.6
-- **Modelo**: Google Gemini 2.5 Flash  
-- **API**: FastAPI + SQLModel
-- **Banco**: PostgreSQL + Qdrant (vector database)
-- **Container**: Docker + UV package manager
-
-### Estrutura do Projeto
-```
-app/
-├── agents/           # Agents implementados
-│   ├── base_enem_agent.py    # Classe base abstrata
-│   ├── tutor_agent.py        # Tutor educacional
-│   ├── quiz_agent.py         # Gerador de quizzes
-│   ├── essay_grader_agent.py # Corretor de redações
-│   ├── study_plan_agent.py   # Planos de estudo
-│   └── selector.py           # Sistema de seleção
-├── api/              # Endpoints FastAPI
-├── core/             # Configurações
-└── main.py           # App principal
-```
-
-## API Endpoints
-
-### Principais
-- `GET /api/v1/agents/` - Listar agents
-- `GET /api/v1/agents/info` - Informações detalhadas
-- `POST /api/v1/agents/create` - Criar agent
-- `POST /api/v1/agents/{agent_id}/runs` - Executar agent
-- `GET /api/v1/health/` - Health check
-
-### Documentação
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-## Configuração
-
-### Variáveis de Ambiente (.env)
-```bash
-# API Configuration
-GOOGLE_API_KEY=your_gemini_api_key_here
-
-# Database
-POSTGRES_HOST=db
-POSTGRES_PORT=5432
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=changethis
-POSTGRES_DB=edtech_agents
-
-# Qdrant
-QDRANT_HOST=qdrant
-QDRANT_PORT=6333
-
-# API
-API_PORT=8000
-DEBUG=true
-```
-
-### Portas dos Serviços
-- **Backend API**: 8000
-- **PostgreSQL**: 5433 (local) / 5432 (container)
-- **Qdrant**: 6335 (local) / 6333 (container)
-
-## Testes
-
-### Health Check
-```bash
-curl http://localhost:8000/api/v1/health/
-```
-
-### Teste de Agent
-```bash
-# Test Agent (sempre funcional)
-curl -X POST "http://localhost:8000/api/v1/agents/test_enem/runs" \
-  -H "Content-Type: application/json" \
-  -d '{"message": "teste", "stream": false}'
-```
-
-## Desenvolvimento
-
-### Comandos UV
-```bash
-# Instalar dependências
-uv sync
-
-# Adicionar nova dependência
-uv add <package>
-
-# Executar aplicação localmente
+. .venv/bin/activate
 uv run uvicorn app.main:app --reload
 ```
 
-### Docker Development
+## Testes
+Os testes usam mocks para não depender de serviços externos.
 ```bash
-# Rebuild containers
-docker-compose build --no-cache
-
-# Ver logs
-docker-compose logs backend --tail=50
-
-# Executar comandos no container
-docker-compose exec backend python -c "import app.agents.selector"
+. .venv/bin/activate
+uv run pytest tests/unit tests/integration
 ```
 
-## Documentação Detalhada
+## Agents e endpoints principais
+- `test_enem`: POST `/api/v1/agents/test_enem/runs`
+- `tutor`: POST `/api/v1/agents/tutor/runs`
+- `quiz`: POST `/api/v1/agents/quiz/runs`
+- `essay_grader`: POST `/api/v1/agents/essay_grader/runs`
+- `study_plan`: POST `/api/v1/agents/study_plan/runs`
+- `orchestrator` (experimental): POST `/api/v1/orchestrator/chat`
+- Listagem e metadados: `GET /api/v1/agents`, `/api/v1/agents/info`
+- Health: `GET /api/v1/health/`, `/api/v1/health/detailed`
 
-- **Status Completo**: [`tasks/PROJECT_STATUS.md`](tasks/PROJECT_STATUS.md)
-- **Roadmap Original**: [`tasks/ROADMAP_EDTECH_AGENT_API.md`](tasks/ROADMAP_EDTECH_AGENT_API.md)
-- **Especificações**: [`AGENTES_MAPEAMENTO.md`](AGENTES_MAPEAMENTO.md)
+## Playground
+- Desativado por padrão para evitar criar agentes que exigem DB/Qdrant/Gemini.
+- Para habilitar (assumindo serviços rodando e keys definidas): exporte `ENABLE_PLAYGROUND=true` antes de iniciar a API.
 
-## Issues Conhecidas
+## Notas sobre knowledge base
+- `app/agents/knowledge.py` espera PDFs em `app/agents/data/pdfs/` (ex.: `enem-geral.pdf`); os arquivos não acompanham o repo.
+- Sem os PDFs, os agentes funcionam, mas sem pesquisa em base vetorial.
 
-1. **DateTime Formatting** (Resolvido)
-   - Status: Corrigido nas tools
-   - Impacto: Todos os agents funcionais
-
-2. **Docker Build Cache**
-   - Workaround: Usar `docker cp` para mudanças rápidas
-   - Impacto: Apenas durante desenvolvimento
-
-## Roadmap Futuro
-
-### Opcional/Melhorias
-- [ ] OrchestratorAgent (coordenador central)
-- [ ] Knowledge base com PDFs
-- [ ] Authentication e autorização
-- [ ] Monitoring e métricas avançadas
-
-## Contribuição
-
-1. Fork o projeto
-2. Crie uma branch (`git checkout -b feature/nova-feature`)
-3. Commit suas mudanças (`git commit -m 'Adiciona nova feature'`)
-4. Push para a branch (`git push origin feature/nova-feature`)
-5. Abra um Pull Request
+## Scripts úteis
+- `scripts/dev.sh`: inicialização rápida de dev.
+- `scripts/format.sh`: formatação (ruff/black se configurados).
+- `scripts/validate.sh`: pipeline de validação.
 
 ## Licença
-
-Este projeto está sob a licença [MIT](LICENSE).
-
-## Reconhecimentos
-
-- Framework [Agno](https://github.com/agno-ai/agno) para arquitetura multi-agent
-- Google Gemini 2.5 Flash para processamento de linguagem natural
-- Baseado no padrão dr_ubyfol como referência de qualidade
-
----
-
-**Status**: Projeto em produção com 5 agents funcionais  
-**Contato**: [Seu contato aqui]
+MIT.

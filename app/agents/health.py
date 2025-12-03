@@ -114,7 +114,7 @@ def get_system_health() -> Dict[str, Any]:
     """
     # Perform all health checks
     db_health = check_database_connection()
-    qdrant_health = check_qdrant_connection() 
+    qdrant_health = check_qdrant_connection()
     api_health = check_google_api_key()
     
     # Determine overall health
@@ -125,7 +125,7 @@ def get_system_health() -> Dict[str, Any]:
     ])
     
     return {
-        'timestamp': datetime.utcnow().isoformat(),
+        'timestamp': datetime.now().astimezone().isoformat(),
         'overall_status': 'healthy' if all_healthy else 'unhealthy',
         'components': {
             'database': db_health,

@@ -70,8 +70,12 @@ def get_enem_knowledge_base(
     else:
         pdf_path = data_dir / 'enem-geral.pdf'
     
+    # Short-circuit if PDF not available
+    if not pdf_path.exists():
+        return None  # type: ignore[return-value]
+    
     # Create knowledge base following dr_ubyfol pattern
-    knowledge_base = PDFKnowledgeBase(
+    return PDFKnowledgeBase(
         path=pdf_path,
         vector_db=get_vector_db(collection_name),
         reader=PDFReader(),
@@ -82,8 +86,6 @@ def get_enem_knowledge_base(
             )
         ),
     )
-    
-    return knowledge_base
 
 
 def get_subject_knowledge(subject: str) -> AgentKnowledge:

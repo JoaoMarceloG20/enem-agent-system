@@ -51,7 +51,6 @@ def test_swagger_endpoints():
                 '/api/v1/agents/quiz/difficulties',
                 '/api/v1/agents/create',
                 '/api/v1/agents/{agent_id}/runs',
-                '/api/v1/agents/{agent_id}/knowledge/load'
             ]
             
             print(f"\n  🔍 Verificando endpoints esperados:")

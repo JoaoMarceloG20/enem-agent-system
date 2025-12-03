@@ -55,6 +55,18 @@ Os testes usam mocks para não depender de serviços externos.
 uv run pytest tests/unit tests/integration
 ```
 
+## Variáveis de ambiente essenciais
+- `GOOGLE_API_KEY`: obrigatória para agentes reais (Gemini).
+- `POSTGRES_*`: credenciais do Postgres (`docker-compose.yml` usa usuário `edtech_api` e porta 5433).
+- `QDRANT_HOST`/`QDRANT_PORT`/`QDRANT_API_KEY`: acesso ao Qdrant (porta 6335 no compose).
+- `DOCS_ENABLED`: ativa/desativa `/docs` e `/redoc` (padrão: true).
+- `BACKEND_CORS_ORIGINS`: lista de origens permitidas; já inclui hosts locais por padrão.
+
+## Documentação da API
+- OpenAPI: `GET /api/v1/openapi.json` (ou `/docs`/`/redoc` se `DOCS_ENABLED=true`).
+- Exemplos de chamadas (curl) para todas as rotas: `api_routes_examples.md`.
+- Base path: `/api/v1`; rotas principais em `app/api/routes/`.
+
 ## Agents e endpoints principais
 - `test_enem`: POST `/api/v1/agents/test_enem/runs`
 - `tutor`: POST `/api/v1/agents/tutor/runs`

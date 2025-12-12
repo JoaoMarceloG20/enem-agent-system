@@ -195,7 +195,6 @@ async def generate_quiz(request: QuizGenerationRequest):
 
         # Parse generated questions using robust parser
         try:
-            print(content)
             questions = parse_quiz_content(
                 content=content,
                 expected_questions=request.num_questions,
@@ -203,11 +202,9 @@ async def generate_quiz(request: QuizGenerationRequest):
                 default_difficulty=request.difficulty
             )
         except QuizParsingError as e:
-            raise e
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Erro ao processar questões geradas: {str(e)} | {request.dict()}",
-                
+                detail=f"Erro ao processar questões geradas: {str(e)}",
             )
         quiz_id = str(uuid.uuid4())
 
@@ -235,7 +232,7 @@ async def generate_quiz(request: QuizGenerationRequest):
             run_id=str(uuid.uuid4()),
             questions=questions,
             quiz_metadata={
-                "generation_params": request.dict(),
+                "generation_params": request.model_dump(),
                 "created_at": datetime.now().isoformat(),
                 "original_llm_content": content  # Store original for debugging
             },
@@ -249,8 +246,9 @@ async def generate_quiz(request: QuizGenerationRequest):
 
         return response
 
+    except HTTPException:
+        raise
     except Exception as e:
-        raise e
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro na geração do quiz: {str(e)}"
@@ -529,7 +527,6 @@ Requisitos por questão:
 LEMBRE-SE: Se solicitadas {request.num_questions} questões, deve gerar {request.num_questions} blocos completos de questão, cada um com suas próprias 5 alternativas."""
 
 def _parse_generated_questions(content: str, request: QuizGenerationRequest) -> List[QuizQuestion]:
-    print('questions_content', content)
     """Parse generated questions from content"""
     # Simplified parsing for demo
     questions = []

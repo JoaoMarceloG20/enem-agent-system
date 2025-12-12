@@ -301,7 +301,7 @@ class TutorResponse(AgentRunResponse):
 class SubjectListResponse(BaseResponse):
     """Response for subject listing"""
     status: StatusEnum = StatusEnum.SUCCESS
-    subjects: List[Dict[str, str]]  # [{"key": "matematica", "name": "Matemática e suas Tecnologias"}]
+    subjects: List[Dict[str, Any]]  # [{"key": "matematica", "name": "Matemática e suas Tecnologias"}]
 
 
 class TopicListResponse(BaseResponse):

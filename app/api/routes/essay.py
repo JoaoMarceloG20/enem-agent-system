@@ -90,7 +90,7 @@ class RubricResponse(BaseResponse):
     """Response for rubric details"""
     status: StatusEnum = StatusEnum.SUCCESS
     competencies: List[Dict[str, Any]]
-    scoring_levels: List[Dict[str, int]]
+    scoring_levels: List[Dict[str, Any]]
     evaluation_criteria: Dict[str, List[str]]
     examples: Dict[str, str]
 

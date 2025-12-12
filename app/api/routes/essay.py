@@ -86,11 +86,16 @@ class DetailedGradingResponse(BaseResponse):
     comparative_analysis: Dict[str, Any]
     improvement_roadmap: List[Dict[str, Any]]
 
+class ScoringLevel(BaseModel):
+    """Scoring level model"""
+    score: int
+    description: str
+
 class RubricResponse(BaseResponse):
     """Response for rubric details"""
     status: StatusEnum = StatusEnum.SUCCESS
     competencies: List[Dict[str, Any]]
-    scoring_levels: List[Dict[str, Any]]
+    scoring_levels: List[ScoringLevel]
     evaluation_criteria: Dict[str, List[str]]
     examples: Dict[str, str]
 

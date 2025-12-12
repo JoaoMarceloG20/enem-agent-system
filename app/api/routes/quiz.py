@@ -193,6 +193,21 @@ async def generate_quiz(request: QuizGenerationRequest):
         else:
             content = str(response)
 
+        # Validate content (Security check)
+        if not content or len(content.strip()) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="LLM retornou conteúdo vazio"
+            )
+
+        # Limit content size to prevent DoS/parsing issues
+        MAX_CONTENT_LENGTH = 50000  # characters
+        if len(content) > MAX_CONTENT_LENGTH:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="Conteúdo gerado excede limite permitido"
+            )
+
         # Parse generated questions using robust parser
         try:
             questions = parse_quiz_content(

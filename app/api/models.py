@@ -298,10 +298,19 @@ class TutorResponse(AgentRunResponse):
 
 
 # Subject and Utility Models
+class SubjectItem(BaseModel):
+    """Subject item model"""
+    key: str
+    name: str
+    icon: Optional[str] = None
+    description: Optional[str] = None
+    difficulty: Optional[str] = None
+    estimated_hours: Optional[Any] = None  # Accepts int or str
+
 class SubjectListResponse(BaseResponse):
     """Response for subject listing"""
     status: StatusEnum = StatusEnum.SUCCESS
-    subjects: List[Dict[str, Any]]  # [{"key": "matematica", "name": "Matemática e suas Tecnologias"}]
+    subjects: List[SubjectItem]
 
 
 class TopicListResponse(BaseResponse):
@@ -433,6 +442,7 @@ __all__ = [
     "TutorResponse",
 
     # Utility
+    "SubjectItem",
     "SubjectListResponse",
     "TopicListResponse",
     "DifficultyListResponse",

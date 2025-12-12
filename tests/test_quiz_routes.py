@@ -128,3 +128,43 @@ def test_get_difficulty_levels():
     assert response.status_code == 200
     data = response.json()
     assert len(data["difficulties"]) > 0
+
+def test_generate_quiz_invalid_subject():
+    payload = {
+        "subject": "invalid_subject",
+        "difficulty": "facil",
+        "num_questions": 2
+    }
+    response = client.post("/api/v1/quiz/generate", json=payload)
+    # Expect validation error from Pydantic
+    assert response.status_code == 422
+
+def test_generate_quiz_zero_questions():
+    payload = {
+        "subject": "matematica",
+        "difficulty": "facil",
+        "num_questions": 0
+    }
+    response = client.post("/api/v1/quiz/generate", json=payload)
+    # Expect validation error from Pydantic (ge=1)
+    assert response.status_code == 422
+
+@patch("app.api.routes.quiz.get_agent")
+def test_generate_quiz_empty_content(mock_get_agent):
+    mock_agent_instance = MagicMock()
+    mock_response = MagicMock()
+    mock_response.content = ""  # Empty content
+    mock_agent_instance.run.return_value = mock_response
+    mock_get_agent.return_value = mock_agent_instance
+
+    payload = {
+        "subject": "matematica",
+        "difficulty": "facil",
+        "num_questions": 2
+    }
+
+    response = client.post("/api/v1/quiz/generate", json=payload)
+
+    assert response.status_code == 500
+    data = response.json()
+    assert "LLM retornou conteúdo vazio" in data["detail"]

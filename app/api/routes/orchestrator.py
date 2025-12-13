@@ -27,33 +27,22 @@ class OrchestratorChatResponse(BaseResponse):
 @router.post("/chat", response_model=OrchestratorChatResponse)
 async def chat_with_orchestrator(request: OrchestratorChatRequest):
     """
-    Envia uma mensagem para o orquestrador, que irá rotear para o agente adequado.
+    Send a message to the orchestrator to route to the appropriate agent.
     
-    O orquestrador analisa a intenção da mensagem e decide se deve responder diretamente
-    ou encaminhar para um agente especializado (Tutor, Quiz, Essay, StudyPlan).
+    The orchestrator analyzes the intent of the message and decides whether to respond
+    directly or forward it to a specialized agent (Tutor, Quiz, Essay, StudyPlan).
     
     Args:
-        request: Objeto contendo a mensagem e metadados.
+        request (OrchestratorChatRequest): Object containing the message and metadata.
         
     Returns:
-        OrchestratorChatResponse: Resposta do agente selecionado.
+        OrchestratorChatResponse: Response from the selected agent.
         
     Example:
         POST /api/v1/orchestrator/chat
         {
-            "message": "Gostaria de um plano de estudos de matemática",
+            "message": "I would like a math study plan",
             "user_id": "user123"
-        }
-        
-        Response:
-        {
-            "status": "success",
-            "response": "Aqui está um plano de estudos focado em matemática...",
-            "agent_id": "study_plan",
-            "metadata": {
-                "routed_to": "study_plan",
-                "reason": "Solicitação de planejamento"
-            }
         }
     """
     try:
@@ -81,10 +70,10 @@ async def chat_with_orchestrator(request: OrchestratorChatRequest):
 @router.get("/info")
 async def get_orchestrator_info():
     """
-    Retorna informações sobre o orquestrador e suas capacidades.
+    Get information about the orchestrator and its capabilities.
     
     Returns:
-        Dict com detalhes do orquestrador.
+        Dict: Details about the orchestrator and routing capabilities.
     """
     return {
         "name": "Orchestrator ENEM",

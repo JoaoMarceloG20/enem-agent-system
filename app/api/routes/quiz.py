@@ -106,7 +106,9 @@ async def get_quiz_info():
     """
     Get detailed information about the QuizAgent.
 
-    Returns comprehensive information about capabilities, subjects, and configuration.
+    Returns:
+        QuizInfoResponse: Information about supported subjects (and topic counts),
+        difficulty levels, and general capabilities of the quiz generator.
     """
     try:
         from app.agents.quiz_agent import QuizAgent
@@ -166,7 +168,16 @@ async def generate_quiz(request: QuizGenerationRequest):
     """
     Generate a custom quiz based on specified criteria.
 
-    Creates questions tailored to subject, difficulty, and specific topics.
+    Uses an LLM to generate questions, which are then parsed and structured.
+    The response includes metadata about the generation process.
+
+    Args:
+        request (QuizGenerationRequest): Parameters for quiz generation (subject,
+        difficulty, number of questions, topics).
+
+    Returns:
+        QuizGenerationResponse: The generated quiz with structured questions
+        and metadata.
     """
     
     try:
@@ -279,7 +290,13 @@ async def quick_generate_question(
     """
     Quickly generate a single question for immediate practice.
 
-    Perfect for quick study sessions and topic-specific practice.
+    Args:
+        subject (Optional[SubjectEnum]): The subject for the question.
+        difficulty (DifficultyEnum): The desired difficulty level.
+        topic (Optional[str]): A specific topic to focus on.
+
+    Returns:
+        QuickQuizResponse: A single structured question.
     """
     try:
         # Create quiz agent
@@ -343,7 +360,14 @@ async def submit_quiz(request: QuizSubmissionRequest):
     """
     Submit quiz answers and get detailed results with analysis.
 
-    Provides comprehensive feedback and personalized recommendations.
+    Calculates the score, analyzes performance by topic/difficulty,
+    and provides personalized recommendations.
+
+    Args:
+        request (QuizSubmissionRequest): User answers and quiz ID.
+
+    Returns:
+        QuizResultResponse: Detailed results including score, grade, and feedback.
     """
     try:
         # Simulate quiz grading (in real implementation, retrieve stored quiz)
@@ -386,7 +410,9 @@ async def get_subject_topics(subject: SubjectEnum):
     """
     Get all available topics for a specific subject.
 
-    Returns organized list of topics with metadata for quiz generation.
+    Returns:
+        TopicsResponse: A list of topics available for quiz generation, including
+        metadata like estimated question count.
     """
     try:
         from app.agents.quiz_agent import QuizAgent
@@ -435,7 +461,9 @@ async def get_difficulty_levels():
     """
     Get all available difficulty levels with descriptions.
 
-    Returns comprehensive information about each difficulty level.
+    Returns:
+        QuizDifficultyResponse: A list of difficulty levels (easy, medium, hard)
+        with descriptions and characteristics.
     """
     try:
         from app.agents.quiz_agent import QuizAgent

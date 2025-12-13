@@ -73,7 +73,9 @@ async def get_tutor_info():
     """
     Get detailed information about the TutorAgent.
     
-    Returns comprehensive information about capabilities, subjects, and configuration.
+    Returns:
+        TutorInfoResponse: Comprehensive information about capabilities, supported subjects,
+        model configuration, and features.
     """
     try:
         from app.agents.tutor_agent import TutorAgent
@@ -119,7 +121,15 @@ async def chat_with_tutor(request: TutorChatRequest):
     """
     Interact with the TutorAgent for educational guidance.
     
-    Provides personalized tutoring with subject-specific expertise.
+    Provides personalized tutoring with subject-specific expertise. The agent
+    can explain concepts, solve problems, and provide examples.
+
+    Args:
+        request (TutorChatRequest): The chat request containing message and context.
+
+    Returns:
+        TutorChatResponse: The agent's response, including structured metadata like
+        explanation type, difficulty level, and learning objectives.
     """
     try:
         # Create tutor agent
@@ -188,7 +198,9 @@ async def get_subject_tree(subject: SubjectEnum):
     """
     Get the hierarchical structure of topics for a specific subject.
     
-    Returns organized tree of topics, subtopics, and learning materials.
+    Returns:
+        SubjectTreeResponse: Organized tree of topics, subtopics, difficulty levels,
+        and estimated study hours for the requested subject.
     """
     try:
         from app.agents.tutor_agent import TutorAgent
@@ -228,7 +240,13 @@ async def get_learning_path(
     """
     Get personalized learning path for a subject.
     
-    Returns recommended sequence of topics based on current level and goals.
+    Args:
+        subject (SubjectEnum): The subject to generate a path for.
+        current_level (str): Student's current proficiency level.
+        focus_areas (Optional[List[str]]): Specific topics to prioritize.
+
+    Returns:
+        LearningPathResponse: A sequence of study steps, including duration and resources.
     """
     try:
         from app.agents.tutor_agent import TutorAgent
@@ -265,7 +283,9 @@ async def get_supported_subjects():
     """
     Get list of all subjects supported by the TutorAgent.
     
-    Returns comprehensive list with metadata for each subject.
+    Returns:
+        SubjectListResponse: A list of supported subjects with their metadata
+        (icon, description, difficulty, estimated hours).
     """
     try:
         from app.agents.tutor_agent import TutorAgent

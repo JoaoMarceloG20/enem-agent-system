@@ -116,7 +116,9 @@ async def get_study_plan_info():
     """
     Get detailed information about the StudyPlanAgent.
     
-    Returns comprehensive information about study intensities, subject weights, and capabilities.
+    Returns:
+        StudyPlanInfoResponse: Information about available study intensities,
+        subject weights, and pre-configured templates.
     """
     try:
         from app.agents.study_plan_agent import StudyPlanAgent
@@ -218,6 +220,13 @@ async def generate_study_plan(request: StudyPlanRequest):
     Generate a personalized study plan based on available time and preferences.
     
     Creates comprehensive weekly schedules with subject distribution and milestones.
+
+    Args:
+        request (StudyPlanRequest): User constraints and preferences (hours per day,
+        subjects, exam date).
+
+    Returns:
+        StudyPlanResponse: The complete study plan including weekly schedules and timeline.
     """
     try:
         # Create study plan agent
@@ -290,6 +299,12 @@ async def update_progress(request: ProgressUpdateRequest):
     Update study plan progress and get adaptive recommendations.
     
     Adjusts the study plan based on completed hours and difficulty feedback.
+
+    Args:
+        request (ProgressUpdateRequest): Progress data (hours studied per subject, difficulty).
+
+    Returns:
+        ProgressUpdateResponse: Updates to the plan, including new recommendations and focus areas.
     """
     try:
         # Simulate progress analysis (in real implementation, retrieve stored plan)
@@ -336,6 +351,14 @@ async def get_study_templates(
     Get available study plan templates.
     
     Returns pre-configured templates for different study scenarios and intensities.
+
+    Args:
+        intensity (Optional[str]): Filter by intensity (light, medium, intensive).
+        duration_weeks (Optional[int]): Filter by duration.
+        daily_hours (Optional[int]): Filter by daily study hours.
+
+    Returns:
+        TemplatesResponse: A list of matching templates.
     """
     try:
         # Generate templates (in real implementation, fetch from database)

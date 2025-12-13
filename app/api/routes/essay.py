@@ -122,7 +122,9 @@ async def get_essay_info():
     """
     Get detailed information about the EssayGraderAgent.
     
-    Returns comprehensive information about competencies, scoring, and capabilities.
+    Returns:
+        EssayInfoResponse: Details about the 5 ENEM competencies, scoring system,
+        capabilities, and supported themes.
     """
     try:
         from app.agents.essay_grader_agent import EssayGraderAgent
@@ -196,7 +198,15 @@ async def grade_essay(request: EssaySubmissionRequest):
     """
     Grade an essay using ENEM criteria across all 5 competencies.
     
-    Provides comprehensive scoring and feedback for improvement.
+    Provides comprehensive scoring, feedback for each competency, general feedback,
+    and suggestions for improvement.
+
+    Args:
+        request (EssaySubmissionRequest): The essay text and optional theme.
+
+    Returns:
+        EssayGradingResponse: Detailed grading results including total score and
+        individual competency scores.
     """
     try:
         start_time = datetime.now()
@@ -265,7 +275,14 @@ async def grade_essay_detailed(request: DetailedGradingRequest):
     """
     Perform detailed essay analysis with comprehensive feedback.
     
-    Includes line-by-line analysis and comparative insights.
+    Includes structural analysis, linguistic analysis, comparative insights,
+    and optionally line-by-line feedback.
+
+    Args:
+        request (DetailedGradingRequest): Essay text and configuration for detailed analysis.
+
+    Returns:
+        DetailedGradingResponse: In-depth analysis of the essay.
     """
     try:
         # Create essay grader agent
@@ -316,7 +333,9 @@ async def get_rubric_details():
     """
     Get detailed rubric information for essay evaluation.
     
-    Returns comprehensive scoring criteria and examples.
+    Returns:
+        RubricResponse: Comprehensive scoring criteria for each competency,
+        scoring levels description, and evaluation examples.
     """
     try:
         from app.agents.essay_grader_agent import EssayGraderAgent
@@ -396,6 +415,15 @@ async def get_sample_essays(
     Get sample essays with different score levels and themes.
     
     Useful for students to understand scoring patterns and quality levels.
+
+    Args:
+        grade_level (Optional[str]): Filter by grade (e.g., "Excelente").
+        theme (Optional[str]): Filter by essay theme.
+        min_score (Optional[int]): Minimum score to include.
+        limit (int): Maximum number of essays to return.
+
+    Returns:
+        SampleEssaysResponse: A list of sample essays matching the criteria.
     """
     try:
         # Generate sample essays (in real implementation, fetch from database)

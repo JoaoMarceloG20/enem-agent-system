@@ -49,20 +49,10 @@ router = APIRouter()
 @router.get('', response_model=AgentListResponse)
 async def list_agents():
     """
-    Lista todos os IDs de agentes disponíveis no sistema.
+    List all available agent IDs in the system.
 
     Returns:
-        AgentListResponse: Lista de identificadores de agentes.
-    
-    Example:
-        ```json
-        {
-            "status": "success",
-            "message": "Agents retrieved successfully",
-            "agents": ["tutor", "quiz", "essay_grader", "study_plan"],
-            "total_count": 4
-        }
-        ```
+        AgentListResponse: A list of agent identifiers.
     """
     try:
         agents = get_available_agents()
@@ -83,12 +73,12 @@ async def list_agents():
 @router.get('/info', response_model=AgentInfoResponse)
 async def get_agents_info():
     """
-    Retorna informações detalhadas sobre todos os agentes disponíveis.
+    Get detailed information about all available agents.
     
-    Inclui capacidades, parâmetros suportados e descrições.
+    Includes capabilities, supported parameters, and descriptions.
     
     Returns:
-        AgentInfoResponse: Detalhes completos de cada agente.
+        AgentInfoResponse: Complete details for each agent.
     """
     try:
         from app.api.models import AgentInfo
@@ -128,12 +118,12 @@ async def get_agents_info():
 @router.get('/subjects', response_model=SubjectListResponse)
 async def get_supported_subjects():
     """
-    Retorna a lista de matérias suportadas pelos agentes ENEM.
+    Get the list of subjects supported by ENEM agents.
     
-    Útil para popular dropdowns no frontend.
+    Useful for populating frontend dropdowns.
     
     Returns:
-        SubjectListResponse: Lista de matérias com chaves e nomes de exibição.
+        SubjectListResponse: List of subjects with keys and display names.
     """
     try:
         from app.agents.tutor_agent import TutorAgent
@@ -161,13 +151,13 @@ async def get_supported_subjects():
 @router.get('/quiz/topics', response_model=TopicListResponse)
 async def get_quiz_topics(subject: Optional[str] = None):
     """
-    Retorna tópicos disponíveis para geração de quiz, filtrados por matéria.
+    Get available topics for quiz generation, optionally filtered by subject.
     
     Args:
-        subject: Filtro opcional de matéria (ex: 'matematica')
+        subject (Optional[str]): Subject filter (e.g., 'matematica')
     
     Returns:
-        TopicListResponse: Lista de tópicos.
+        TopicListResponse: A list of topics.
     """
     try:
         from app.agents.quiz_agent import QuizAgent
@@ -210,10 +200,10 @@ async def get_quiz_topics(subject: Optional[str] = None):
 @router.get('/quiz/difficulties', response_model=DifficultyListResponse)
 async def get_quiz_difficulties():
     """
-    Retorna os níveis de dificuldade disponíveis para quizzes.
+    Get available difficulty levels for quizzes.
     
     Returns:
-        DifficultyListResponse: Lista de dificuldades (facil, medio, dificil).
+        DifficultyListResponse: List of difficulties (easy, medium, hard).
     """
     try:
         from app.agents.quiz_agent import QuizAgent
@@ -241,10 +231,10 @@ async def get_quiz_difficulties():
 @router.get('/study/intensities', response_model=IntensityListResponse)
 async def get_study_intensities():
     """
-    Retorna os níveis de intensidade disponíveis para planos de estudo.
+    Get available intensity levels for study plans.
     
     Returns:
-        IntensityListResponse: Lista de intensidades (light, moderate, intensive, extreme).
+        IntensityListResponse: List of intensities (light, moderate, intensive, extreme).
     """
     try:
         from app.agents.study_plan_agent import StudyPlanAgent
@@ -272,13 +262,13 @@ async def get_study_intensities():
 @router.post('/create', response_model=AgentCreationResponse)
 async def create_agent_instance(body: AgentCreationRequest):
     """
-    Cria uma instância de agente e retorna sua configuração.
+    Create an agent instance and return its configuration.
     
     Args:
-        body: Parâmetros de criação do agente.
+        body (AgentCreationRequest): Parameters for agent creation.
         
     Returns:
-        AgentCreationResponse: Detalhes do agente criado.
+        AgentCreationResponse: Details of the created agent.
     """
     try:
         # Generate session ID if not provided
@@ -386,26 +376,20 @@ async def run_agent(
     intensity: Optional[str] = None
 ):
     """
-    Executa um agente específico com uma mensagem.
+    Execute a specific agent directly with a message.
     
-    Este endpoint permite interagir diretamente com um agente (Tutor, Quiz, etc) sem passar pelo orquestrador.
+    This endpoint allows direct interaction with an agent (Tutor, Quiz, etc.)
+    bypassing the orchestrator.
     
     Args:
-        agent_id: Tipo de agente (tutor, quiz, essay_grader, study_plan)
-        body: Corpo da requisição contendo a mensagem
-        subject: (Opcional) Matéria específica
-        difficulty: (Opcional) Nível de dificuldade
-        intensity: (Opcional) Intensidade do plano de estudos
+        agent_id (AgentTypeEnum): Agent type (tutor, quiz, essay_grader, study_plan).
+        body (AgentRunRequest): Request body containing the message.
+        subject (Optional[str]): Specific subject context.
+        difficulty (Optional[str]): Difficulty level.
+        intensity (Optional[str]): Study intensity.
         
     Returns:
-        Resposta estruturada dependendo do tipo de agente.
-        
-    Example:
-        POST /api/v1/agents/tutor/runs
-        {
-            "message": "Explique a fórmula de Bhaskara",
-            "session_id": "optional-session-id"
-        }
+        Union[AgentRunResponse, ...]: Structured response depending on the agent type.
     """
     try:
         start_time = time.time()

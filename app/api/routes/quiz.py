@@ -106,7 +106,9 @@ async def get_quiz_info():
     """
     Get detailed information about the QuizAgent.
 
-    Returns comprehensive information about capabilities, subjects, and configuration.
+    Returns:
+        QuizInfoResponse: Information about supported subjects (and topic counts),
+        difficulty levels, and general capabilities of the quiz generator.
     """
     try:
         from app.agents.quiz_agent import QuizAgent
@@ -166,7 +168,16 @@ async def generate_quiz(request: QuizGenerationRequest):
     """
     Generate a custom quiz based on specified criteria.
 
-    Creates questions tailored to subject, difficulty, and specific topics.
+    Uses an LLM to generate questions, which are then parsed and structured.
+    The response includes metadata about the generation process.
+
+    Args:
+        request (QuizGenerationRequest): Parameters for quiz generation (subject,
+        difficulty, number of questions, topics).
+
+    Returns:
+        QuizGenerationResponse: The generated quiz with structured questions
+        and metadata.
     """
     
     try:
@@ -193,9 +204,23 @@ async def generate_quiz(request: QuizGenerationRequest):
         else:
             content = str(response)
 
+        # Validate content (Security check)
+        if not content or len(content.strip()) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="LLM retornou conteúdo vazio"
+            )
+
+        # Limit content size to prevent DoS/parsing issues
+        MAX_CONTENT_LENGTH = 50000  # characters
+        if len(content) > MAX_CONTENT_LENGTH:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="Conteúdo gerado excede limite permitido"
+            )
+
         # Parse generated questions using robust parser
         try:
-            print(content)
             questions = parse_quiz_content(
                 content=content,
                 expected_questions=request.num_questions,
@@ -203,11 +228,9 @@ async def generate_quiz(request: QuizGenerationRequest):
                 default_difficulty=request.difficulty
             )
         except QuizParsingError as e:
-            raise e
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Erro ao processar questões geradas: {str(e)} | {request.dict()}",
-                
+                detail=f"Erro ao processar questões geradas: {str(e)}",
             )
         quiz_id = str(uuid.uuid4())
 
@@ -235,7 +258,7 @@ async def generate_quiz(request: QuizGenerationRequest):
             run_id=str(uuid.uuid4()),
             questions=questions,
             quiz_metadata={
-                "generation_params": request.dict(),
+                "generation_params": request.model_dump(),
                 "created_at": datetime.now().isoformat(),
                 "original_llm_content": content  # Store original for debugging
             },
@@ -249,8 +272,9 @@ async def generate_quiz(request: QuizGenerationRequest):
 
         return response
 
+    except HTTPException:
+        raise
     except Exception as e:
-        raise e
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro na geração do quiz: {str(e)}"
@@ -266,7 +290,13 @@ async def quick_generate_question(
     """
     Quickly generate a single question for immediate practice.
 
-    Perfect for quick study sessions and topic-specific practice.
+    Args:
+        subject (Optional[SubjectEnum]): The subject for the question.
+        difficulty (DifficultyEnum): The desired difficulty level.
+        topic (Optional[str]): A specific topic to focus on.
+
+    Returns:
+        QuickQuizResponse: A single structured question.
     """
     try:
         # Create quiz agent
@@ -330,7 +360,14 @@ async def submit_quiz(request: QuizSubmissionRequest):
     """
     Submit quiz answers and get detailed results with analysis.
 
-    Provides comprehensive feedback and personalized recommendations.
+    Calculates the score, analyzes performance by topic/difficulty,
+    and provides personalized recommendations.
+
+    Args:
+        request (QuizSubmissionRequest): User answers and quiz ID.
+
+    Returns:
+        QuizResultResponse: Detailed results including score, grade, and feedback.
     """
     try:
         # Simulate quiz grading (in real implementation, retrieve stored quiz)
@@ -373,7 +410,9 @@ async def get_subject_topics(subject: SubjectEnum):
     """
     Get all available topics for a specific subject.
 
-    Returns organized list of topics with metadata for quiz generation.
+    Returns:
+        TopicsResponse: A list of topics available for quiz generation, including
+        metadata like estimated question count.
     """
     try:
         from app.agents.quiz_agent import QuizAgent
@@ -422,7 +461,9 @@ async def get_difficulty_levels():
     """
     Get all available difficulty levels with descriptions.
 
-    Returns comprehensive information about each difficulty level.
+    Returns:
+        QuizDifficultyResponse: A list of difficulty levels (easy, medium, hard)
+        with descriptions and characteristics.
     """
     try:
         from app.agents.quiz_agent import QuizAgent
@@ -529,7 +570,6 @@ Requisitos por questão:
 LEMBRE-SE: Se solicitadas {request.num_questions} questões, deve gerar {request.num_questions} blocos completos de questão, cada um com suas próprias 5 alternativas."""
 
 def _parse_generated_questions(content: str, request: QuizGenerationRequest) -> List[QuizQuestion]:
-    print('questions_content', content)
     """Parse generated questions from content"""
     # Simplified parsing for demo
     questions = []

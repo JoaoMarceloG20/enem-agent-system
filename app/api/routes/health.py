@@ -8,7 +8,12 @@ router = APIRouter()
 
 @router.get('/', response_model=HealthCheckResponse)
 def health_check():
-    """Check the health of the API"""
+    """
+    Check the basic health of the API.
+
+    Returns:
+        HealthCheckResponse: A simple status object indicating the API is running.
+    """
     return HealthCheckResponse(
         status=StatusEnum.SUCCESS,
         message='Edtech Agent API is running'
@@ -17,7 +22,15 @@ def health_check():
 
 @router.get('/detailed', response_model=HealthCheckResponse)
 def detailed_health_check():
-    """Get detailed health information for all system components"""
+    """
+    Get detailed health information for all system components.
+
+    Checks connections to databases (Postgres, Qdrant), API keys (Google Gemini),
+    and other critical services.
+
+    Returns:
+        HealthCheckResponse: Detailed status of all subsystems.
+    """
     try:
         system_health = get_system_health()
         agents_health = get_agents_health()
@@ -48,7 +61,12 @@ def detailed_health_check():
 
 @router.get('/system', response_model=HealthCheckResponse)
 def system_health_check():
-    """Get system-level health checks (database, qdrant, api keys)"""
+    """
+    Get system-level health checks (database, qdrant, api keys).
+
+    Returns:
+        HealthCheckResponse: Status of infrastructure components.
+    """
     try:
         system_health = get_system_health()
         
@@ -70,7 +88,14 @@ def system_health_check():
 
 @router.get('/agents', response_model=HealthCheckResponse)
 def agents_health_check():
-    """Get agent-specific health information"""
+    """
+    Get agent-specific health information.
+
+    Checks if agent configurations and models are valid.
+
+    Returns:
+        HealthCheckResponse: Status of individual agents.
+    """
     try:
         agents_health = get_agents_health()
         
